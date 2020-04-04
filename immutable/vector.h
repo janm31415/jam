@@ -305,11 +305,11 @@ namespace immutable
     private:
       ref<rrb<T, atomic_ref_counting, N>> _impl = rrb_create<T, atomic_ref_counting, N>();
 
-      template <typename T, bool atomic_ref_counting, int N>
+      template <typename T_2, bool atomic_ref_counting_2, int N_2>
       friend class transient_vector;
 
-      template <typename T, bool atomic_ref_counting, int N>
-      friend vector<T, atomic_ref_counting, N> operator + (const vector<T, atomic_ref_counting, N>& left, const vector<T, atomic_ref_counting, N>& right);
+      template <typename T_2, bool atomic_ref_counting_2, int N_2>
+      friend vector<T_2, atomic_ref_counting_2, N_2> operator + (const vector<T_2, atomic_ref_counting_2, N_2>& left, const vector<T_2, atomic_ref_counting_2, N_2>& right);
     };
 
   template <typename T, bool atomic_ref_counting, int N>
@@ -419,7 +419,7 @@ namespace immutable
     private:
       ref<transient_rrb<T, atomic_ref_counting, N>> _impl;
 
-      template <typename T, bool atomic_ref_counting, int N>
+      template <typename T_2, bool atomic_ref_counting_2, int N_2>
       friend class vector;
     };
 

@@ -44,7 +44,12 @@ JAM_BEGIN
 
   inline bool valid_utf8_file(const std::wstring& filename)
     {
+#ifdef _WIN32
     std::ifstream ifs(filename);
+#else
+    std::string fn = convert_wstring_to_string(filename);
+    std::ifstream ifs(fn);
+#endif
     if (!ifs)
       return false;
 
