@@ -35,9 +35,14 @@ namespace jamlib
 
     bool file_exists(const std::string& filename)
       {
+#ifdef _WIN32
       std::wstring wfilename = convert_string_to_wstring(filename, ENC_UTF8); // filenames are in utf8 encoding
       std::wifstream f;
       f.open(wfilename, std::wifstream::in);
+#else
+      std::ifstream f;
+      f.open(filename, std::ifstream::in);  
+#endif
       if (f.fail())
         return false;
       f.close();
@@ -49,9 +54,13 @@ namespace jamlib
       buffer b;
       if (file_exists(filename))
         {
+      #ifdef _WIN32
         std::wstring wfilename = convert_string_to_wstring(filename, ENC_UTF8); // filenames are in utf8 encoding
+      #else
+        std::string wfilename(filename);
+      #endif
         auto cont = b.transient();
-        if (enc == ENC_UTF8 && valid_utf8_file(wfilename))
+        if (enc == ENC_UTF8 && JAM::valid_utf8_file(wfilename))
           {
           auto f = std::ifstream{ wfilename };
           std::string file_in_chars;
@@ -998,7 +1007,11 @@ namespace jamlib
 
       std::optional<app_state> operator() (const Cmd_w& cmd)
         {
+        #ifdef _WIN32
         std::wstring wfilename = convert_string_to_wstring(cmd.filename, ENC_UTF8); // filenames are in utf8 encoding
+        #else
+        std::string wfilename(cmd.filename);
+        #endif
         auto f = std::ofstream{ wfilename };
         if (f.is_open())
           {

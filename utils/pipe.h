@@ -2,11 +2,15 @@
 #include "namespace.h"
 #include "encoding.h"
 
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef _WIN32
 
 #include <windows.h>
 #include <chrono>
 #include <thread>
+
+#else
+
+#endif
 
 JAM_BEGIN
 
@@ -35,6 +39,7 @@ JAM_BEGIN
   
   std::string read_std_input(int time_out);
 
+#ifdef _WIN32
   struct child_proc
     {
     HANDLE hProcess;
@@ -290,7 +295,6 @@ JAM_BEGIN
     pr.hFrom = GetStdHandle(STD_INPUT_HANDLE);
     return read_from_pipe(&pr, time_out);   
     }
-  JAM_END
 
 #else
 /*
@@ -329,4 +333,11 @@ std::string read_from_pipe(void* process, int time_out)
   return "";
   }
 
+inline std::string read_std_input(int time_out)
+  {
+  return "";
+  }
+
 #endif
+
+JAM_END

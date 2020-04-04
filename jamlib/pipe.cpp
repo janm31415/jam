@@ -114,7 +114,7 @@ namespace jamlib
   void SendToProgram(const char* message, void* process)
     {
     int res = JAM::send_to_pipe(process, message);
-    if (res != NO_ERROR)
+    if (res != 0)
       {
       std::stringstream str;
       str << "writing " << message << " to program: " << res;

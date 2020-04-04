@@ -17,6 +17,4 @@ namespace jamlib
 
   JAMLIB_API std::string convert_wstring_to_string(const std::wstring& str, encoding enc);
 
-  JAMLIB_API bool valid_utf8_file(const std::wstring& filename);
-
   }

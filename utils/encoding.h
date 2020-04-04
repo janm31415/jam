@@ -59,4 +59,21 @@ JAM_BEGIN
     return utf8::is_valid(it, eos);
     }
 
+  inline bool valid_utf8_file(const std::string& filename)
+    {
+#ifdef _WIN32
+    std::string wfn = convert_string_to_wstring(filename);
+    std::ifstream ifs(wfn);
+#else
+    std::ifstream ifs(filename);
+#endif
+    if (!ifs)
+      return false;
+
+    std::istreambuf_iterator<char> it(ifs.rdbuf());
+    std::istreambuf_iterator<char> eos;
+
+    return utf8::is_valid(it, eos);
+    }    
+
   JAM_END

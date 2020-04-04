@@ -50,9 +50,4 @@ namespace jamlib
     return out;
     }
 
-  bool valid_utf8_file(const std::wstring& filename)
-    {
-    return JAM::valid_utf8_file(filename);
-    }
-
   }
