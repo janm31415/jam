@@ -118,7 +118,11 @@ namespace
     void test()
       {
       std::string folder = JAM::get_folder(JAM::get_executable_path());
+      #ifdef _WIN32
       std::string command = folder + "a+";
+      #else
+      std::string command = folder + "a+";
+      #endif
       std::stringstream ss;
       ss << "|\"" << command << "\"";
       auto result = handle_command(state, ss.str());

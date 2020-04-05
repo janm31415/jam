@@ -1,5 +1,6 @@
 #include "jam.h"
 #include "parse.h"
+#include <utils/pipe.h>
 #include "pipe.h"
 #include "error.h"
 #include <fstream>
@@ -247,7 +248,9 @@ namespace jamlib
         int err = StartChildProcessWithoutPipes(command_line.c_str(), folder.c_str(), nullptr, &process);
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
+        #ifdef _WIN32
         DestroyChildProcess(process, 0);
+        #endif
         return state;
         }
 
@@ -260,12 +263,22 @@ namespace jamlib
 
         auto command_line = executable_name + " " + parameters;
 
+#ifdef _WIN32
         void* process = nullptr;
-        int err = StartChildProcess(command_line.c_str(), folder.c_str(), nullptr, &process);
+        int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
-
-        std::string text = ReadFromProgram(process);        
+        std::string text = JAM::read_from_pipe(process, 50);        
+#else
+        int pipefd[3];
+        //void* process = nullptr;
+        int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, pipefd);
+        //int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, &process, true);
+        if (err != 0)
+          throw_error(pipe_error, "Could not create child process");
+        std::string text = JAM::read_from_pipe(pipefd, 50);              
+        //std::string text = JAM::read_from_pipe(process, 50);              
+#endif        
 
         file f = state.files[state.active_file];
 
@@ -291,7 +304,13 @@ namespace jamlib
         state.files[state.active_file].dot.r.p2 = state.files[state.active_file].dot.r.p1 + wtext.length();
         state.files[state.active_file].modification_mask |= 1;
         push_undo(ss);
-        DestroyChildProcess(process, 10);
+
+#ifdef _WIN32        
+        JAM::destroy_pipe(process, 10);
+#else
+        JAM::destroy_pipe(pipefd, 10);
+        //JAM::destroy_pipe(process, 10);
+#endif
 
         return state;
         }
@@ -305,11 +324,6 @@ namespace jamlib
 
         auto command_line = executable_name + " " + parameters;
 
-        void* process = nullptr;
-        int err = StartChildProcess(command_line.c_str(), folder.c_str(), nullptr, &process);
-        if (err != 0)
-          throw_error(pipe_error, "Could not create child process");
-
         const auto& f = state.files[state.active_file];
         auto it = f.content.begin() + f.dot.r.p1;
         auto it_end = f.content.begin() + f.dot.r.p2;
@@ -318,9 +332,29 @@ namespace jamlib
         wstr.erase(std::remove(wstr.begin(), wstr.end(), '\r'), wstr.end());
         auto message = convert_wstring_to_string(wstr, f.enc);
 
-        SendToProgram(message.c_str(), process);
+#ifdef _WIN32
+        void* process = nullptr;
+        int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
+        if (err != 0)
+          throw_error(pipe_error, "Could not create child process");
+        JAM::send_to_pipe(process, message.c_str());        
+        JAM::destroy_pipe(process, 10);  
+#else
+        int pipefd[3];
+        //void* process = nullptr;
+        int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, pipefd);
+        //int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, &process, false);
+        if (err != 0)
+          throw_error(pipe_error, "Could not create child process");      
+        JAM::send_to_pipe(pipefd, message.c_str());   
+        int status;
+        waitpid(pipefd[2], &status, 0);  
+        JAM::destroy_pipe(pipefd, 10);    
 
-        DestroyChildProcess(process, 10);
+        //JAM::send_to_pipe(process, message.c_str());     
+        //JAM::destroy_pipe(process, 10);         
+#endif  
+        
 
         return state;
         }
@@ -334,11 +368,6 @@ namespace jamlib
 
         auto command_line = executable_name + " " + parameters;
 
-        void* process = nullptr;
-        int err = StartChildProcess(command_line.c_str(), folder.c_str(), nullptr, &process);
-        if (err != 0)
-          throw_error(pipe_error, "Could not create child process");
-
         file f = state.files[state.active_file];
         auto it = f.content.begin() + f.dot.r.p1;
         auto it_end = f.content.begin() + f.dot.r.p2;
@@ -347,9 +376,42 @@ namespace jamlib
         wstr.erase(std::remove(wstr.begin(), wstr.end(), '\r'), wstr.end());
         auto message = convert_wstring_to_string(wstr, f.enc);
 
-        SendToProgram(message.c_str(), process);
-    
-        std::string text = ReadFromProgram(process);
+
+#ifdef _WIN32
+        void* process = nullptr;
+        int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
+        if (err != 0)
+          throw_error(pipe_error, "Could not create child process");
+
+        JAM::send_to_pipe(process, message.c_str());  
+        std::string text = JAM::read_from_pipe(process, 50);  
+#else
+        //attention: no space after executable name
+        int pipefd[3];
+        
+        int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, pipefd);
+        if (err != 0)
+          throw_error(pipe_error, "Could not create child process");        
+
+        JAM::send_to_pipe(pipefd, message.c_str());   
+
+        int status;
+        waitpid(pipefd[2], &status, 0);
+
+        std::string text = JAM::read_from_pipe(pipefd, 50);  
+
+        //void* write_process = nullptr;
+        //void* read_process = nullptr;
+        //int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &write_process, false);
+        //if (err != 0)
+        //  throw_error(pipe_error, "Could not create child process");
+        //err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &read_process, true);
+        //if (err != 0)
+        //  throw_error(pipe_error, "Could not create child process");
+        //JAM::send_to_pipe(write_process, message.c_str());  
+        //std::string text = JAM::read_from_pipe(read_process, 50);  
+#endif
+                  
 
         snapshot ss;
         ss.content = f.content;
@@ -373,7 +435,14 @@ namespace jamlib
         state.files[state.active_file].dot.r.p2 = state.files[state.active_file].dot.r.p1 + wtext.length();
         state.files[state.active_file].modification_mask |= 1;
         push_undo(ss);
-        DestroyChildProcess(process, 10);
+
+  #ifdef _WIN32
+        JAM::destroy_pipe(process, 10);  
+  #else
+        JAM::destroy_pipe(pipefd, 10);  
+        //JAM::destroy_pipe(read_process, 10); 
+        //JAM::destroy_pipe(write_process, 10);         
+  #endif
 
         return state;
         }

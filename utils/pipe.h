@@ -15,10 +15,21 @@
 #include <vector>
 #include <string.h>
 #include <stdio.h>
-
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/prctl.h>
+#include <signal.h>
+#include <chrono>
+#include <fcntl.h>
+#include <thread>
 #endif
 
 JAM_BEGIN
+
+
+#ifdef _WIN32
+
 
 /*
 create_pipe
@@ -45,7 +56,6 @@ std::string read_from_pipe(void* process, int time_out);
 
 std::string read_std_input(int time_out);
 
-#ifdef _WIN32
 struct child_proc
   {
   HANDLE hProcess;
@@ -313,46 +323,243 @@ inline std::string read_std_input(int time_out)
   current_dir: if not nullptr, will change active directory to this one
   pr:          output process pointer
   */
-int create_pipe(const char *cmdLine, const char *dir, const char* current_dir, void** pr)
+
+/*
+inline int create_pipe(const char *cmdLine, const char *dir, const char* current_dir, void** pr, bool read)
   {
-  *pr = nullptr;
+
+  std::string pipe_command = std::string(dir) + std::string(cmdLine);
+  if (read)
+    *pr = (void*)popen(pipe_command.c_str(), "r");
+  else
+    *pr = (void*)popen(pipe_command.c_str(), "w");
+  if (*pr)
+    return 0;
   return -1;
   }
+*/
+
+inline int create_pipe(const char *cmdLine, const char *dir, const char* current_dir, int* pipefd)
+  {
+  std::string c(cmdLine);
+  std::string f(dir);
+  std::string p = f+c;
+  pid_t pid = 0;
+  int inpipefd[2];
+  int outpipefd[2];
+  if (pipe(inpipefd) != 0)
+    {
+    throw std::runtime_error("failed to pipe");
+    }
+  if (pipe(outpipefd) != 0)
+    {
+    throw std::runtime_error("failed to pipe");
+    }
+  pid = fork();
+  if (pid < 0)
+    throw std::runtime_error("failed to fork");
+  if (pid == 0)
+    {
+    dup2(outpipefd[0], STDIN_FILENO);
+    dup2(inpipefd[1], STDOUT_FILENO);
+
+    close(inpipefd[0]);
+    close(inpipefd[1]);
+    close(outpipefd[0]);
+    close(outpipefd[1]);
+    prctl(PR_SET_PDEATHSIG, SIGTERM);
+
+    
+    //printf("p: %s\n", p.c_str());
+    //printf("c: %s\n", c.c_str());
+    if (execl(p.c_str(), c.c_str(), (char*)NULL) == -1)
+      printf("error, execl returned\n");
+    exit(1);    
+    }
+  
+  close(outpipefd[0]);
+  close(inpipefd[1]);
+  pipefd[0] = outpipefd[1];
+  pipefd[1] = inpipefd[0];
+
+  auto flags = fcntl(pipefd[0], F_GETFL, 0);
+  flags |= O_NONBLOCK;
+  fcntl(pipefd[0], F_SETFL, flags);
+
+  flags = fcntl(pipefd[1], F_GETFL, 0);
+  flags |= O_NONBLOCK;
+  fcntl(pipefd[1], F_SETFL, flags);
+
+  pipefd[2] = pid;
+
+  return 0;
+  }
+
 
 /*
 destroy_pipe
 signal = 9 : kill immediately
 signal = 10: kill after 3s waiting
 */
-void destroy_pipe(void* pr, int signal)
-  {
 
+/*
+inline void destroy_pipe(void* pr, int signal)
+  {
+  pclose((FILE*)pr);
+  }
+*/
+
+inline void destroy_pipe(int* pipefd, int signal)
+  {
+  //std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  //kill(pipefd[2], SIGKILL);
+  //int status;
+  //waitpid(pipefd[2], &status, 0);
+  close(pipefd[0]);
+  close(pipefd[1]);
   }
 
 //returns 0 if successful
 //message should be utf8 string
-int send_to_pipe(void* process, const char* message)
+
+/*
+inline int send_to_pipe(void* process, const char* message)
   {
-  return -1;
+  return fputs(message, (FILE*)process) > 0 ? 0 : -1;
   }
+*/
+
+  
+inline int send_to_pipe(int* pipefd, const char* message)
+  {
+  write(pipefd[0], message, strlen(message));
+  write(pipefd[0], "\n", 1);
+  return 0;
+  }  
 
 //returns utf8 string
-std::string read_from_pipe(void* process, int time_out)
+/*  
+inline std::string read_from_pipe(void* process, int time_out)
   {
-  return "";
+  //std::stringstream ss;
+  //char buffer[MAX_SIZE];
+  //while (fgets(buffer, MAX_SIZE, (FILE*)process))
+  //  {
+  //  ss << buffer;
+  //  }
+  //return ss.str();
+  auto tic = std::chrono::steady_clock::now();
+  auto toc = std::chrono::steady_clock::now();
+  auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+
+  std::stringstream ss;
+  char buf[2] = {0};
+  while (true)
+    {
+    buf[0] = fgetc((FILE*)process);
+    if (buf[0] == EOF)
+      break;
+    if (buf[0]!=0)
+      ss << buf[0];
+    toc = std::chrono::steady_clock::now();
+    time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    if (time_elapsed > time_out)
+      break;
+    }
+  return ss.str();
+  }
+  */
+
+inline std::string read_from_pipe(int* pipefd, int time_out)
+  {
+  std::stringstream ss;
+  auto tic = std::chrono::steady_clock::now();
+  auto toc = std::chrono::steady_clock::now();
+  auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+
+
+  char buffer[MAX_SIZE];
+  while (true)
+    {
+    memset(buffer, 0, MAX_SIZE);
+    int num_read = read(pipefd[1], buffer, MAX_SIZE-1);
+    if (num_read > 0)
+      ss << buffer;
+    toc = std::chrono::steady_clock::now();
+    time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    if (time_elapsed > time_out)
+      break;
+    std::this_thread::sleep_for(std::chrono::milliseconds(time_out / 2 > 10 ? 10 : time_out / 2));
+    }
+  return ss.str();
   }
 
 
 
 inline std::string read_std_input(int time_out)
   {
+
   std::stringstream ss;
+
+  /*
   char buffer[MAX_SIZE];
   while (fgets(buffer, MAX_SIZE, stdin))
     {
     ss << buffer;
     }
+  */
+  /*
+  auto tic = std::chrono::steady_clock::now();
+  auto toc = std::chrono::steady_clock::now();
+  auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+
+  char buf[2] = {0};
+  while (true)
+    {
+    buf[0] = fgetc((FILE*)stdin);
+    if (buf[0] == EOF)
+      break;
+    if (buf[0]!=0)
+      ss << buf[0];
+    toc = std::chrono::steady_clock::now();
+    time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    if (time_elapsed > time_out)
+      break;
+    }  
   return ss.str();
+  */
+
+  auto flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+  flags |= O_NONBLOCK;
+  fcntl(STDIN_FILENO, F_SETFL, flags);
+
+  //char buffer[MAX_SIZE];
+  //int num_read = read(STDIN_FILENO, buffer, MAX_SIZE);
+  //if (num_read > 0)
+  //  ss << buffer;
+  //return ss.str();
+
+  
+  auto tic = std::chrono::steady_clock::now();
+  auto toc = std::chrono::steady_clock::now();
+  auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+
+
+  char buffer[MAX_SIZE];
+  while (true)
+    {
+    memset(buffer, 0, MAX_SIZE);
+    int num_read = read(STDIN_FILENO, buffer, MAX_SIZE-1);
+    if (num_read > 0)
+      ss << buffer;
+    toc = std::chrono::steady_clock::now();
+    time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
+    if (time_elapsed > time_out)
+      break;
+    std::this_thread::sleep_for(std::chrono::milliseconds(time_out / 2 > 10 ? 10 : time_out / 2));
+    }
+  return ss.str();
+
   }
 
 #endif

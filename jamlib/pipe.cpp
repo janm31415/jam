@@ -101,30 +101,5 @@ namespace jamlib
     }
 #endif
 
-  int StartChildProcess(const char *cmdLine, const char *dir, const char* current_dir, void** pr)
-    {
-    return JAM::create_pipe(cmdLine, dir, current_dir, pr);
-    }
-
-  void DestroyChildProcess(void* pr, int signal)
-    {
-    JAM::destroy_pipe(pr, signal);
-    }
-
-  void SendToProgram(const char* message, void* process)
-    {
-    int res = JAM::send_to_pipe(process, message);
-    if (res != 0)
-      {
-      std::stringstream str;
-      str << "writing " << message << " to program: " << res;
-      throw_error(pipe_error, str.str());
-      }
-    }
-
-  std::string ReadFromProgram(void* process, int time_out)
-    {
-    return JAM::read_from_pipe(process, time_out);
-    }
 
   }
