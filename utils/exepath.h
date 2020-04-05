@@ -7,7 +7,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-
+#include <unistd.h>
+#include <linux/limits.h>
 #endif
 
 JAM_BEGIN

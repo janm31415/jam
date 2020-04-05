@@ -10,6 +10,12 @@
 
 #else
 
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <string.h>
+#include <stdio.h>
+
 #endif
 
 JAM_BEGIN
@@ -297,6 +303,9 @@ inline std::string read_std_input(int time_out)
   }
 
 #else
+
+  #define MAX_SIZE 4096
+
 /*
   create_pipe
   cmdLine:     executable name + parameters
@@ -333,9 +342,17 @@ std::string read_from_pipe(void* process, int time_out)
   return "";
   }
 
+
+
 inline std::string read_std_input(int time_out)
   {
-  return "";
+  std::stringstream ss;
+  char buffer[MAX_SIZE];
+  while (fgets(buffer, MAX_SIZE, stdin))
+    {
+    ss << buffer;
+    }
+  return ss.str();
   }
 
 #endif
