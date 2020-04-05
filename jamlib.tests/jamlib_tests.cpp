@@ -34,7 +34,10 @@ namespace
 
     std::string get_output()
       {
-      return JAM::convert_wstring_to_string(out.str());
+      std::string result = JAM::convert_wstring_to_string(out.str());
+      out.clear();
+      out.str(L"");
+      return result;
       }
 
     app_state state;
@@ -60,10 +63,62 @@ namespace
       }
     };
 
+  struct test_command_a : text_fixture
+    {
+    void test()
+      {
+      auto result = handle_command(state, "a/Test/,p");
+      TEST_ASSERT(result != std::nullopt);
+      TEST_EQ("The quick brown fox jumps over the lazy dogTest\n", get_output());
+      }
+    };
+
+  struct test_command_c : text_fixture
+    {
+    void test()
+      {
+      auto result = handle_command(state, ", c/AAA/ ,p");
+      TEST_ASSERT(result != std::nullopt);
+      TEST_EQ("AAA\n", get_output());
+      }
+    };
+
+  struct test_command_x : text_fixture
+    {
+    void test()
+      {
+      auto result = handle_command(state, ", c/AAA/");
+      TEST_ASSERT(result != std::nullopt);
+      result = handle_command(*result, "x/B*/ c/-/ ,p");
+      TEST_ASSERT(result != std::nullopt);
+      TEST_EQ("-A-A-A\n", get_output());
+      }
+    };
+
+  struct test_command_addresses : text_fixture
+    {
+    void test()
+      {
+      auto result = handle_command(state, "a/\\nSecond line/ 2p");
+      TEST_ASSERT(result != std::nullopt);
+      TEST_EQ("Second line\n", get_output());
+      result = handle_command(*result, "$-#4,$ p");
+      TEST_EQ("line\n", get_output());
+      result = handle_command(*result, "a/\\nThird line/ $-1,$ p");
+      TEST_EQ("Second line\nThird line\n", get_output());
+      result = handle_command(state, ",p");
+      TEST_EQ("The quick brown fox jumps over the lazy dog\n", get_output());
+      }
+    };
+
   }
 
 void run_all_jamlib_tests()
   {
   test_command_p().test();
   test_command_q().test();
+  test_command_a().test();
+  test_command_c().test();
+  test_command_x().test();
+  test_command_addresses().test();
   }
