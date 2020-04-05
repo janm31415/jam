@@ -20,6 +20,8 @@ namespace jamlib
   namespace
     {
 
+    static std::wostream* gp_jamlib_output = &std::wcout;
+
     file make_empty_file(uint64_t file_id)
       {
       file out;
@@ -685,7 +687,8 @@ namespace jamlib
         {
         auto l1 = get_line_number(state.files[state.active_file].dot.r.p1, state.files[state.active_file].content);
         auto l2 = get_line_number(state.files[state.active_file].dot.r.p2, state.files[state.active_file].content);
-        std::cout << l1 << " " << l2 << " " << state.files[state.active_file].dot.r.p1 << " " << state.files[state.active_file].dot.r.p2 << std::endl;
+        if (gp_jamlib_output)
+          *gp_jamlib_output << l1 << L" " << l2 << L" " << state.files[state.active_file].dot.r.p1 << L" " << state.files[state.active_file].dot.r.p2 << std::endl;
         return state;
         }
 
@@ -697,7 +700,8 @@ namespace jamlib
         auto it_end = current_file.content.begin() + current_file.dot.r.p2;
         for (; it != it_end; ++it)
           str << *it;
-        std::wcout << str.str() << L"\n";
+        if (gp_jamlib_output)
+          *gp_jamlib_output << str.str() << L"\n";
         return state;
         }
 
@@ -1340,4 +1344,11 @@ namespace jamlib
     folder = get_folder(path);
     }
 
+  void set_output_stream(std::wostream* output)
+    {
+    if (output)
+      gp_jamlib_output = output;
+    else
+      gp_jamlib_output = &std::wcout;
+    }
   }

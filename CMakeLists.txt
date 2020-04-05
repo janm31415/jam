@@ -14,6 +14,7 @@ add_subdirectory(immutable)
 add_subdirectory(immutable.tests)
 add_subdirectory(jamcmd)
 add_subdirectory(jamlib)
+add_subdirectory(jamlib.tests)
 add_subdirectory(utils)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
