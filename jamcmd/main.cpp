@@ -12,7 +12,7 @@ int main(int argc, char** argv)
   {
   using namespace jamlib;
 
-  app_state state = init_state(argc, argv);
+  app_state state = init_state(argc, const_cast<const char**>(argv));
   std::optional<app_state> new_state = state;
   do
     {

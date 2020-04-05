@@ -1301,7 +1301,7 @@ namespace jamlib
     return state;
     }
 
-  app_state init_state(int argc, char** argv)
+  app_state init_state(int argc, const char** argv)
     {
     app_state state;
     for (int j = 1; j < argc; ++j)

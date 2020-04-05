@@ -16,7 +16,7 @@ namespace
     {
     text_fixture()
       {
-      char* files[2];
+      const char* files[2];
       files[0] = nullptr;
 #ifdef _WIN32
       files[1] = "data\\text.txt";
