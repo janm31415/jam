@@ -1,6 +1,7 @@
 
 set(HDRS
 encoding.h
+exepath.h
 filename.h
 namespace.h
 pipe.h

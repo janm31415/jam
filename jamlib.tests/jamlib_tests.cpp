@@ -4,6 +4,8 @@
 #include <jamlib/jam.h>
 
 #include <utils/encoding.h>
+#include <utils/exepath.h>
+#include <utils/filename.h>
 
 #include <string>
 #include <sstream>
@@ -111,6 +113,20 @@ namespace
       }
     };
 
+  struct test_piped_command : text_fixture
+    {
+    void test()
+      {
+      std::string folder = JAM::get_folder(JAM::get_executable_path());
+      std::string command = folder + "a+";
+      std::stringstream ss;
+      ss << "|\"" << command << "\"";
+      auto result = handle_command(state, ss.str());
+      result = handle_command(*result, ",p");
+      TEST_EQ("    The quick brown fox jumps over the lazy dog\n", get_output());
+      }
+    };
+
   }
 
 void run_all_jamlib_tests()
@@ -121,4 +137,5 @@ void run_all_jamlib_tests()
   test_command_c().test();
   test_command_x().test();
   test_command_addresses().test();
+  test_piped_command().test();
   }

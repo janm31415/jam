@@ -9,7 +9,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
+add_subdirectory(a-)
+add_subdirectory(a+)
 add_subdirectory(immutable)
 add_subdirectory(immutable.tests)
 add_subdirectory(jamcmd)
