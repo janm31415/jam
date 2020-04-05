@@ -249,7 +249,7 @@ namespace jamlib
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
         #ifdef _WIN32
-        DestroyChildProcess(process, 0);
+        JAM::destroy_pipe(process, 0);
         #endif
         return state;
         }
@@ -268,7 +268,7 @@ namespace jamlib
         int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
-        std::string text = JAM::read_from_pipe(process, 50);        
+        std::string text = JAM::read_from_pipe(process, 100);        
 #else
         int pipefd[3];
         //void* process = nullptr;
@@ -337,7 +337,13 @@ namespace jamlib
         int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
-        JAM::send_to_pipe(process, message.c_str());        
+        int res = JAM::send_to_pipe(process, message.c_str());    
+        if (res != NO_ERROR)
+          {
+          std::stringstream str;
+          str << "writing " << message << " to program: " << res;
+          throw_error(pipe_error, str.str());
+          }
         JAM::destroy_pipe(process, 10);  
 #else
         int pipefd[3];
@@ -383,8 +389,16 @@ namespace jamlib
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
 
-        JAM::send_to_pipe(process, message.c_str());  
-        std::string text = JAM::read_from_pipe(process, 50);  
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        int res = JAM::send_to_pipe(process, message.c_str());  
+        if (res != NO_ERROR)
+          {
+          std::stringstream str;
+          str << "writing " << message << " to program: " << res;
+          throw_error(pipe_error, str.str());
+          }
+        std::string text = JAM::read_from_pipe(process, 100);  
 #else
         //attention: no space after executable name
         int pipefd[3];
