@@ -1,11 +1,4 @@
 #include <iostream>
-#include <string>
-#include <windows.h>
-#include <vector>
-#include <chrono>
-#include <thread>
-#include <sstream>
-
 #include <pipe.h>
 
 int main(int, char**)
