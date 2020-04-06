@@ -55,7 +55,7 @@ target_include_directories(pdcursestest
     ${CMAKE_CURRENT_SOURCE_DIR}/../
 	  ${CMAKE_CURRENT_SOURCE_DIR}/../pdcurses/
 	  ${SDL_INCLUDE_DIR}
-      ${SDL_TTF_INCLUDE_DIR}
+    ${SDL_TTF_INCLUDE_DIR}
     )	
 	
 target_link_libraries(pdcursestest

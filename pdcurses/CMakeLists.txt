@@ -12,7 +12,7 @@ if (UNIX)
   set(SDL_INCLUDE_DIR "/usr/include/SDL2/")
   set(SDL_LIBRARIES "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so" "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so.0")
   set(SDL_TTF_INCLUDE_DIR "/usr/include/SDL2/")
-  set(SDL_TTF_LIBRARIES "")
+  set(SDL_TTF_LIBRARIES "/usr/lib/x86_64-linux-gnu/libSDL2_ttf-2.0.so" "/usr/lib/x86_64-linux-gnu/libSDL2_ttf-2.0.so.0")
 endif (UNIX)
 
 set(HDRS

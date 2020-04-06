@@ -12,7 +12,7 @@ if (UNIX)
   set(SDL_INCLUDE_DIR "/usr/include/SDL2/")
   set(SDL_LIBRARIES "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so" "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so.0")
   set(SDL_TTF_INCLUDE_DIR "/usr/include/SDL2/")
-  set(SDL_TTF_LIBRARIES "")
+  set(SDL_TTF_LIBRARIES "/usr/lib/x86_64-linux-gnu/libSDL2_ttf-2.0.so" "/usr/lib/x86_64-linux-gnu/libSDL2_ttf-2.0.so.0")
 endif (UNIX)
 
 set(HDRS
@@ -59,21 +59,32 @@ set(JSON
 ${CMAKE_CURRENT_SOURCE_DIR}/../json/json.hpp
 )
 
+if (WIN32)
 set(CMAKE_C_FLAGS_DEBUG "/W4 /MP /GF /RTCu /Od /MDd /Zi")
 set(CMAKE_CXX_FLAGS_DEBUG "/W4 /MP /GF /RTCu /Od /MDd /Zi")
 set(CMAKE_C_FLAGS_RELEASE "/W4 /MP /GF /O2 /Ob2 /Oi /Ot /MD /Zi")
 set(CMAKE_CXX_FLAGS_RELEASE "/W4 /MP /GF /O2 /Ob2 /Oi /Ot /MD /Zi")
+endif (WIN32)
 
 # general build definitions
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
+if (WIN32)
 add_definitions(-DPDC_DLL_BUILD)
+endif (WIN32)
 add_definitions(-DPDC_RGB)
 add_definitions(-DPDC_FORCE_UTF8)
 add_definitions(-DPDC_WIDE)
 
+if (WIN32)
 add_executable(jam WIN32 ${HDRS} ${SRCS} ${JSON})
+endif (WIN32)
+
+if (UNIX)
+add_executable(jam ${HDRS} ${SRCS} ${JSON})
+endif (UNIX)
+
 source_group("Header Files" FILES ${HDRS})
 source_group("Source Files" FILES ${SRCS})
 source_group("ThirdParty/json" FILES ${JSON})

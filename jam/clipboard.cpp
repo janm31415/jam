@@ -1,5 +1,6 @@
 #include "clipboard.h"
 
+#ifdef _WIN32
 #include <windows.h>
 
 void copy_to_windows_clipboard(const std::string& text)
@@ -46,3 +47,17 @@ std::string get_text_from_windows_clipboard()
   CloseClipboard();
   return std::string();
   }
+
+#else
+
+void copy_to_windows_clipboard(const std::string&)
+  {
+
+  }
+
+std::string get_text_from_windows_clipboard()
+  {
+  return "";
+  }
+
+#endif

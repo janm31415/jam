@@ -9,14 +9,14 @@
 #include <cctype>
 
 #include <curses.h>
-#include <filename.h>
+#include <jam_filename.h>
 
 #include "mouse.h"
 #include "keyboard.h"
 #include "syntax_highlight.h"
 
-#include <encoding.h>
-#include <pipe.h>
+#include <jam_encoding.h>
+#include <jam_pipe.h>
 
 extern "C"
   {

@@ -9,7 +9,7 @@
 
 #include "dirent.h"
 
-#include <utf8.h>
+#include <jam_utf8.h>
 
 #include <jamlib/encoding.h>
 

@@ -7,7 +7,7 @@
 #include "utils.h"
 #include "file_utils.h"
 #include "serialize.h"
-#include "active_folder.h"
+#include <jam_active_folder.h>
 
 #include <SDL.h>
 #include <curses.h>
@@ -19,9 +19,9 @@
 #include <map>
 #include <functional>
 
-#include <pipe.h>
-#include <encoding.h>
-#include <filename.h>
+#include <jam_pipe.h>
+#include <jam_encoding.h>
+#include <jam_filename.h>
 
 extern "C"
   {

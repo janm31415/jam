@@ -2,7 +2,7 @@
 #include "file_utils.h"
 #include <windows.h>
 
-#include <encoding.h>
+#include <jam_encoding.h>
 
 
 bool is_modified(const jamlib::file& f)
