@@ -368,8 +368,8 @@ namespace jamlib
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");      
         JAM::send_to_pipe(pipefd, message.c_str());   
-        int status;
-        waitpid(pipefd[2], &status, 0);  
+        //int status;
+        //waitpid(pipefd[2], &status, 0);  
         JAM::destroy_pipe(pipefd, 10);               
 #endif          
         return state;
@@ -419,10 +419,10 @@ namespace jamlib
 
         JAM::send_to_pipe(pipefd, message.c_str());   
 
-        int status;
-        waitpid(pipefd[2], &status, 0);
+        //int status;
+        //waitpid(pipefd[2], &status, 0);
 
-        std::string text = JAM::read_from_pipe(pipefd, 50);          
+        std::string text = JAM::read_from_pipe(pipefd, 100);          
 #endif
                   
 
