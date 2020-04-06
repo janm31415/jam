@@ -5,11 +5,8 @@
 #ifdef _WIN32
 
 #include <windows.h>
-#include <chrono>
-#include <thread>
 
 #else
-
 #include <sstream>
 #include <iostream>
 #include <vector>
@@ -20,15 +17,16 @@
 #include <sys/types.h>
 #include <sys/prctl.h>
 #include <signal.h>
-#include <chrono>
 #include <fcntl.h>
-#include <thread>
 #endif
 
+#include <chrono>
+#include <thread>
 #include "active_folder.h"
 
 JAM_BEGIN
 
+#define MAX_PIPE_BUFFER_SIZE 4096
 
 #ifdef _WIN32
 
@@ -229,8 +227,6 @@ inline int send_to_pipe(void* process, const char* message)
   return SOCKET_ERROR;
   }
 
-#define MAX_SIZE 4096
-
 inline std::string read_from_pipe(void* process, int time_out)
   {
   std::string input;
@@ -255,14 +251,14 @@ inline std::string read_from_pipe(void* process, int time_out)
       check_at_least_once = true;
       bool bytes_left_to_read = bytes_left > 0;
 
-      char line[MAX_SIZE];
+      char line[MAX_PIPE_BUFFER_SIZE];
 
       while (bytes_left_to_read)
         {
         int n = bytes_left;
-        if (n >= MAX_SIZE)
-          n = MAX_SIZE - 1;
-        memset(line, 0, MAX_SIZE);
+        if (n >= MAX_PIPE_BUFFER_SIZE)
+          n = MAX_PIPE_BUFFER_SIZE - 1;
+        memset(line, 0, MAX_PIPE_BUFFER_SIZE);
         DWORD count;
         if (!ReadFile(cp->hFrom, line, n, &count, nullptr))
           return input;
@@ -288,8 +284,6 @@ inline std::string read_std_input(int time_out)
   }
 
 #else
-
-#define MAX_SIZE 4096
 
 inline int create_pipe(const char *path, char* const* argv, const char* current_dir, int* pipefd)
   {
@@ -365,12 +359,12 @@ inline std::string read_from_pipe(int* pipefd, int time_out)
   auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
 
   bool check_at_least_once = true;
-  char buffer[MAX_SIZE];
+  char buffer[MAX_PIPE_BUFFER_SIZE];
   while (time_elapsed  < time_out || check_at_least_once)
     {
     check_at_least_once = false;
-    memset(buffer, 0, MAX_SIZE);
-    int num_read = read(pipefd[1], buffer, MAX_SIZE-1);
+    memset(buffer, 0, MAX_PIPE_BUFFER_SIZE);
+    int num_read = read(pipefd[1], buffer, MAX_PIPE_BUFFER_SIZE-1);
     if (num_read > 0)
       {
       ss << buffer;
@@ -401,12 +395,12 @@ inline std::string read_std_input(int time_out)
   auto time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count();
 
   bool check_at_least_once = true;
-  char buffer[MAX_SIZE];
+  char buffer[MAX_PIPE_BUFFER_SIZE];
   while (time_elapsed  < time_out || check_at_least_once)
     {
     check_at_least_once = false;
-    memset(buffer, 0, MAX_SIZE);
-    int num_read = read(STDIN_FILENO, buffer, MAX_SIZE-1);
+    memset(buffer, 0, MAX_PIPE_BUFFER_SIZE);
+    int num_read = read(STDIN_FILENO, buffer, MAX_PIPE_BUFFER_SIZE-1);
     if (num_read > 0)
       {
       ss << buffer;
