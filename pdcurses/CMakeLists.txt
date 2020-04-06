@@ -1,15 +1,18 @@
 if (WIN32)
 
-set(SDL_INCLUDE_DIR "C:/Program Files/SDL2/include")
+set(SDL_INCLUDE_DIR "C:/Program Files/SDL2/include/SDL2")
 set(SDL_LIBRARIES "C:/Program Files/SDL2/lib/SDL2.lib")
 
-set(SDL_TTF_INCLUDE_DIR "C:/Program Files/SDL_ttf/include")
+set(SDL_TTF_INCLUDE_DIR "C:/Program Files/SDL_ttf/include/SDL2")
 set(SDL_TTF_LIBRARIES "C:/Program Files/SDL_ttf/lib/SDL2_ttf.lib" "C:/Program Files/SDL_ttf/lib/freetype248.lib")
 
 endif (WIN32)
 
 if (UNIX)
-
+  set(SDL_INCLUDE_DIR "/usr/include/SDL2/")
+  set(SDL_LIBRARIES "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so" "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so.0")
+  set(SDL_TTF_INCLUDE_DIR "/usr/include/SDL2/")
+  set(SDL_TTF_LIBRARIES "")
 endif (UNIX)
 
 set(HDRS
@@ -81,7 +84,10 @@ endif (WIN32)
 add_definitions(-D_UNICODE)
 add_definitions(-DUNICODE)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+
+if (WIN32)
 add_definitions(-DPDC_DLL_BUILD)
+endif (WIN32)
 add_definitions(-DPDC_RGB)
 add_definitions(-DPDC_FORCE_UTF8)
 add_definitions(-DPDC_WIDE)
@@ -93,8 +99,8 @@ source_group("Source Files" FILES ${srcs})
 target_include_directories(pdcurses
     PRIVATE
     	${CMAKE_CURRENT_SOURCE_DIR}
-      ${SDL_INCLUDE_DIR}/SDL2
-      ${SDL_TTF_INCLUDE_DIR}/SDL2
+      ${SDL_INCLUDE_DIR}
+      ${SDL_TTF_INCLUDE_DIR}
     )	
 	
 target_link_libraries(pdcurses
