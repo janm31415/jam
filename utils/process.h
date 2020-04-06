@@ -24,7 +24,7 @@ struct process_info
   HANDLE hFrom;
   };
 
-int run_process(const char *path, const char** argv, const char* current_dir, void** pr)
+int run_process(const char *path, char * const * argv, const char* current_dir, void** pr)
   {
   STARTUPINFOW siStartInfo;
   JAM::process_info *cp;
@@ -136,7 +136,7 @@ inline void destroy_process(void* pr, int signal)
 
 #else
 
-inline int run_process(const char *path, const char** argv, const char* current_dir, int* process)
+inline int run_process(const char *path, char * const * argv, const char* current_dir, pid_t* process)
   {
   pid_t pid = 0;
   
@@ -157,11 +157,11 @@ inline int run_process(const char *path, const char** argv, const char* current_
   return 0;
   }
 
-inline void destroy_process(int* process, int)
+inline void destroy_process(pid_t process, int)
   {
-  kill(*process, SIGKILL);
+  kill(process, SIGKILL);
   int status;
-  waitpid(*process, &status, 0);
+  waitpid(process, &status, 0);
   }
 
 #endif

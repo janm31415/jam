@@ -291,11 +291,8 @@ inline std::string read_std_input(int time_out)
 
 #define MAX_SIZE 4096
 
-inline int create_pipe(const char *path, const char** argv, const char* current_dir, int* pipefd)
+inline int create_pipe(const char *path, char* const* argv, const char* current_dir, int* pipefd)
   {
-  std::string c(cmdLine);
-  std::string f(dir);
-  std::string p = f+c;
   pid_t pid = 0;
   int inpipefd[2];
   int outpipefd[2];

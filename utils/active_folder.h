@@ -6,6 +6,7 @@
 #include "encoding.h"
 #else
 #include <unistd.h>
+#include <linux/limits.h>
 #endif
 
 JAM_BEGIN
@@ -41,7 +42,7 @@ class active_folder
     active_folder(const char* folder)
       {
       getcwd(buf, sizeof(buf));
-      if (folder`)
+      if (folder)
         chdir(folder);
       }
 
@@ -51,7 +52,7 @@ class active_folder
       }
 
   private:
-    char buf[MAX_PATH];
+    char buf[PATH_MAX];
   };
 
 #endif
