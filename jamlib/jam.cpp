@@ -1,7 +1,7 @@
 #include "jam.h"
 #include "parse.h"
 #include <utils/pipe.h>
-#include "pipe.h"
+#include <utils/process.h>
 #include "error.h"
 #include <fstream>
 #include <iostream>
@@ -239,17 +239,22 @@ namespace jamlib
         {
         std::string executable_name;
         std::string folder;
-        std::string parameters;
+        std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
-
-        auto command_line = executable_name + " " + parameters;
+        auto path = folder + executable_name;
+        const char** argv = new const char*[parameters.size() + 2];
+        argv[0] = path.c_str();
+        for (int j = 0; j < parameters.size(); ++j)  
+          argv[j + 1] = parameters[j].c_str();
+        argv[parameters.size() + 1] = nullptr;
 
         void* process = nullptr;
-        int err = StartChildProcessWithoutPipes(command_line.c_str(), folder.c_str(), nullptr, &process);
+        int err = JAM::run_process(path.c_str(), argv, nullptr, &process);
+        delete[] argv;
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
         #ifdef _WIN32
-        JAM::destroy_pipe(process, 0);
+        JAM::destroy_process(process, 0);
         #endif
         return state;
         }
@@ -258,21 +263,27 @@ namespace jamlib
         {
         std::string executable_name;
         std::string folder;
-        std::string parameters;
+        std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
-
-        auto command_line = executable_name + " " + parameters;
+        auto path = folder + executable_name;
+        const char** argv = new const char*[parameters.size() + 2];
+        argv[0] = path.c_str();
+        for (int j = 0; j < parameters.size(); ++j)
+          argv[j + 1] = parameters[j].c_str();
+        argv[parameters.size() + 1] = nullptr;
 
 #ifdef _WIN32
         void* process = nullptr;
-        int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
+        int err = JAM::create_pipe(path.c_str(), argv, nullptr, &process);
+        delete[] argv;
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
         std::string text = JAM::read_from_pipe(process, 100);        
 #else
         int pipefd[3];
         //void* process = nullptr;
-        int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, pipefd);
+        int err = JAM::create_pipe(path.c_str(), argv, , nullptr, pipefd);
+        delete[] argv;
         //int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, &process, true);
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
@@ -309,7 +320,6 @@ namespace jamlib
         JAM::destroy_pipe(process, 10);
 #else
         JAM::destroy_pipe(pipefd, 10);
-        //JAM::destroy_pipe(process, 10);
 #endif
 
         return state;
@@ -319,10 +329,14 @@ namespace jamlib
         {
         std::string executable_name;
         std::string folder;
-        std::string parameters;
+        std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
-
-        auto command_line = executable_name + " " + parameters;
+        auto path = folder + executable_name;
+        const char** argv = new const char*[parameters.size() + 2];
+        argv[0] = path.c_str();
+        for (int j = 0; j < parameters.size(); ++j)
+          argv[j + 1] = parameters[j].c_str();
+        argv[parameters.size() + 1] = nullptr;
 
         const auto& f = state.files[state.active_file];
         auto it = f.content.begin() + f.dot.r.p1;
@@ -334,7 +348,8 @@ namespace jamlib
 
 #ifdef _WIN32
         void* process = nullptr;
-        int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
+        int err = JAM::create_pipe(path.c_str(), argv, nullptr, &process);
+        delete[] argv;
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
         int res = JAM::send_to_pipe(process, message.c_str());    
@@ -348,7 +363,8 @@ namespace jamlib
 #else
         int pipefd[3];
         //void* process = nullptr;
-        int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, pipefd);
+        int err = JAM::create_pipe(path.c_str(), argv, nullptr, pipefd);
+        delete[] argv;
         //int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, &process, false);
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");      
@@ -369,10 +385,14 @@ namespace jamlib
         {
         std::string executable_name;
         std::string folder;
-        std::string parameters;
+        std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
-
-        auto command_line = executable_name + " " + parameters;
+        auto path = folder + executable_name;
+        const char** argv = new const char*[parameters.size() + 2];
+        argv[0] = path.c_str();
+        for (int j = 0; j < parameters.size(); ++j)
+          argv[j + 1] = parameters[j].c_str();
+        argv[parameters.size() + 1] = nullptr;
 
         file f = state.files[state.active_file];
         auto it = f.content.begin() + f.dot.r.p1;
@@ -385,11 +405,10 @@ namespace jamlib
 
 #ifdef _WIN32
         void* process = nullptr;
-        int err = JAM::create_pipe(command_line.c_str(), folder.c_str(), nullptr, &process);
+        int err = JAM::create_pipe(path.c_str(), argv, nullptr, &process);
+        delete[] argv;
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");
-
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         int res = JAM::send_to_pipe(process, message.c_str());  
         if (res != NO_ERROR)
@@ -403,7 +422,8 @@ namespace jamlib
         //attention: no space after executable name
         int pipefd[3];
         
-        int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, pipefd);
+        int err = JAM::create_pipe(path.c_str(), argv, nullptr, pipefd);
+        delete[] argv;
         if (err != 0)
           throw_error(pipe_error, "Could not create child process");        
 
@@ -1398,11 +1418,12 @@ namespace jamlib
     return state;
     }
 
-  void parse_command(std::string& executable_name, std::string& folder, std::string& parameters, std::string command)
-    {
+  void parse_command(std::string& executable_name, std::string& folder, std::vector<std::string>& parameters, std::string command)
+    {    
     executable_name.clear();
     folder.clear();
     parameters.clear();
+    std::string pars;
     auto pos = command.find_first_not_of(' ');
     command = command.substr(pos);
     if (command.empty())
@@ -1413,18 +1434,28 @@ namespace jamlib
       path = command.substr(1);
       pos = path.find_first_of('"');
       if (pos != std::string::npos)
-        parameters = path.substr(pos + 1);
+        pars = path.substr(pos + 1);
       path = path.substr(0, pos);
       }
     else
       {
       pos = command.find_first_of(' ');
       if (pos != std::string::npos)
-        parameters = command.substr(pos + 1);
+        pars = command.substr(pos + 1);
       path = command.substr(0, pos);
       }
     executable_name = get_filename(path);
     folder = get_folder(path);
+    if (!pars.empty())
+      {
+      std::istringstream iss(pars);
+      std::string s;
+      while (std::getline(iss, s, ' '))
+        {
+        if (!s.empty())
+          parameters.push_back(s);
+        }
+      }
     }
 
   void set_output_stream(std::wostream* output)

@@ -25,12 +25,14 @@
 #include <thread>
 #endif
 
+#include "active_folder.h"
+
 JAM_BEGIN
 
 
 #ifdef _WIN32
 
-struct child_proc
+struct pipe_process
   {
   HANDLE hProcess;
   DWORD pid;
@@ -38,7 +40,7 @@ struct child_proc
   HANDLE hFrom;
   };
 
-inline int create_pipe(const char *cmdLine, const char *dir, const char* current_dir, void** pr)
+inline int create_pipe(const char *path, const char** argv, const char* current_dir, void** pr)
   {
   HANDLE hChildStdinRd, hChildStdinWr, hChildStdoutRd, hChildStdoutWr;
   HANDLE hChildStdinWrDup, hChildStdoutRdDup;
@@ -46,8 +48,8 @@ inline int create_pipe(const char *cmdLine, const char *dir, const char* current
   BOOL fSuccess;
   PROCESS_INFORMATION piProcInfo;
   STARTUPINFOW siStartInfo;
-  child_proc *cp;
-  wchar_t buf[MAX_PATH];
+  pipe_process *cp;
+  
   DWORD err;
 
   *pr = nullptr;
@@ -106,22 +108,20 @@ inline int create_pipe(const char *cmdLine, const char *dir, const char* current
   /* Arrange to (1) look in dir for the child .exe file, and
   * (2) have dir be the child's working directory.  Interpret
   * dir relative to the directory WinBoard loaded from. */
-  GetCurrentDirectoryW(MAX_PATH, buf);
-
-  if (current_dir)
-    {
-    std::wstring wdir(convert_string_to_wstring(std::string(current_dir)));
-    SetCurrentDirectoryW(wdir.c_str());
-    }
+  
+  active_folder af(current_dir);
 
   std::wstring wcmdLine;
-  if (dir)
+  wcmdLine = convert_string_to_wstring(std::string(path));
+
+  // i = 0 equals path, is for linux
+  size_t i = 1;
+  const char* arg = argv[i];
+  while (arg)
     {
-    wcmdLine = convert_string_to_wstring(std::string(dir));
-    wcmdLine.append(convert_string_to_wstring(std::string(cmdLine)));
+    wcmdLine.append(L" " + convert_string_to_wstring(std::string(arg)));
+    arg = argv[++i];
     }
-  else
-    wcmdLine = convert_string_to_wstring(std::string(cmdLine));
 
   /* Now create the child process. */
 
@@ -148,8 +148,9 @@ inline int create_pipe(const char *cmdLine, const char *dir, const char* current
     &piProcInfo); /* receives PROCESS_INFORMATION */
 
   err = GetLastError();
-  SetCurrentDirectoryW(buf); /* return to prev directory */
-  if (!fSuccess) {
+
+  if (!fSuccess) 
+    {
     return err;
     }
 
@@ -161,7 +162,7 @@ inline int create_pipe(const char *cmdLine, const char *dir, const char* current
   CloseHandle(hChildStdoutWr);
 
   /* Prepare return value */
-  cp = (child_proc *)calloc(1, sizeof(child_proc));
+  cp = (pipe_process *)calloc(1, sizeof(pipe_process));
   cp->hProcess = piProcInfo.hProcess;
   cp->pid = piProcInfo.dwProcessId;
   cp->hFrom = hChildStdoutRdDup;
@@ -174,10 +175,10 @@ inline int create_pipe(const char *cmdLine, const char *dir, const char* current
 
 inline void destroy_pipe(void* pr, int signal)
   {
-  child_proc *cp;
+  pipe_process *cp;
   int result;
 
-  cp = (child_proc *)pr;
+  cp = (pipe_process *)pr;
   if (cp == nullptr)
     return;
 
@@ -218,7 +219,7 @@ inline int send_to_pipe(void* process, const char* message)
   if (process == nullptr)
     return ERROR_INVALID_HANDLE;
   count = (int)strlen(message);
-  if (WriteFile(((child_proc *)process)->hTo, message, count, &dOutCount, NULL))
+  if (WriteFile(((pipe_process *)process)->hTo, message, count, &dOutCount, NULL))
     {
     if (count == (int)dOutCount)
       return NO_ERROR;
@@ -236,7 +237,7 @@ inline std::string read_from_pipe(void* process, int time_out)
 
   if (process == nullptr)
     return "";
-  child_proc *cp = (child_proc *)process;
+  pipe_process *cp = (pipe_process *)process;
 
   DWORD bytes_left = 0;
 
@@ -281,7 +282,7 @@ inline std::string read_from_pipe(void* process, int time_out)
 
 inline std::string read_std_input(int time_out)
   {
-  child_proc pr;
+  pipe_process pr;
   pr.hFrom = GetStdHandle(STD_INPUT_HANDLE);
   return read_from_pipe(&pr, time_out);
   }
@@ -290,7 +291,7 @@ inline std::string read_std_input(int time_out)
 
 #define MAX_SIZE 4096
 
-inline int create_pipe(const char *cmdLine, const char *dir, const char* current_dir, int* pipefd)
+inline int create_pipe(const char *path, const char** argv, const char* current_dir, int* pipefd)
   {
   std::string c(cmdLine);
   std::string f(dir);
@@ -321,7 +322,7 @@ inline int create_pipe(const char *cmdLine, const char *dir, const char* current
     prctl(PR_SET_PDEATHSIG, SIGTERM);
 
 
-    if (execl(p.c_str(), c.c_str(), (char*)NULL) == -1)
+    if (execv(path, argv) == -1)
       throw std::runtime_error("failed to pipe (execl failed)");
     exit(1);    
     }

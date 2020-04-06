@@ -1,10 +1,12 @@
 
 set(HDRS
+active_folder.h
 encoding.h
 exepath.h
 filename.h
 namespace.h
 pipe.h
+process.h
 utf8.h
 utf8_checked.h
 utf8_core.h

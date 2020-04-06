@@ -4,7 +4,6 @@ error.h
 jam.h
 jam_api.h
 parse.h
-pipe.h
 )
 	
 set(SRCS
@@ -12,7 +11,6 @@ encoding.cpp
 error.cpp
 jam.cpp
 parse.cpp
-pipe.cpp
 )
 
 if (WIN32)

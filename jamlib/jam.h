@@ -58,7 +58,7 @@ namespace jamlib
   //use const cast to convert your main's char** argv to const char** argv
   JAMLIB_API app_state init_state(int argc, const char** argv);
   JAMLIB_API std::optional<app_state> handle_command(app_state state, std::string command);
-  JAMLIB_API void parse_command(std::string& executable_name, std::string& folder, std::string& parameters, std::string command);
+  JAMLIB_API void parse_command(std::string& executable_name, std::string& folder, std::vector<std::string>& parameters, std::string command);
 
   //nullptr for wcout, which is the default
   JAMLIB_API void set_output_stream(std::wostream* output);
