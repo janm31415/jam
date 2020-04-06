@@ -1,16 +1,12 @@
 #pragma once
-#include "namespace.h"
+#include "jam_namespace.h"
 #include <string>
-#include "encoding.h"
+#include "jam_encoding.h"
 
 JAM_BEGIN
   /*
   Everything is assumed to be in utf8 encoding
   */
-  std::string get_extension(const std::string& filename);
-  std::string remove_extension(const std::string& filename);
-  std::string get_folder(const std::string& path);
-  std::string get_filename(const std::string& path);
 
   inline std::string get_extension(const std::string& filename)
     {

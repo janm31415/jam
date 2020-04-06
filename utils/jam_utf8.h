@@ -27,6 +27,6 @@ DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
-#include "utf8_checked.h"
-#include "utf8_unchecked.h"
+#include "jam_utf8_checked.h"
+#include "jam_utf8_unchecked.h"
 

@@ -3,7 +3,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <string>
-#include "encoding.h"
+#include "jam_encoding.h"
 #else
 #include <unistd.h>
 #include <linux/limits.h>

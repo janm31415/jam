@@ -27,7 +27,7 @@ DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
-#include "utf8_core.h"
+#include "jam_utf8_core.h"
 
 namespace utf8
 {

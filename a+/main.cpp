@@ -1,5 +1,5 @@
 #include <iostream>
-#include <pipe.h>
+#include <jam_pipe.h>
 
 int main(int, char**)
   {  

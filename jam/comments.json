@@ -1,0 +1,26 @@
+{
+  "c": {"multiline_begin": "/*",
+        "multiline_end": "*/",
+        "singleline": "//"
+       },
+  "cpp": {"multiline_begin": "/*",
+          "multiline_end": "*/",
+          "singleline": "//"
+       },
+  "h": {"multiline_begin": "/*",
+        "multiline_end": "*/",
+        "singleline": "//"
+       },
+  "hpp": {"multiline_begin": "/*",
+          "multiline_end": "*/",
+          "singleline": "//"
+       },
+  "scm": {"multiline_begin": "#|",
+          "multiline_end": "|#",
+          "singleline": ";"
+       },
+  "py": { "singleline": "#" },
+  "cmake": { "singleline": "#" },
+  "cmakelists.txt": { "singleline": "#" }
+
+}

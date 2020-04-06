@@ -17,4 +17,5 @@ namespace jamlib
 
   JAMLIB_API std::string convert_wstring_to_string(const std::wstring& str, encoding enc);
 
+  JAMLIB_API uint16_t ascii_to_utf16(unsigned char ch);
   }

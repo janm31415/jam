@@ -1,6 +1,6 @@
 #pragma once
-#include "namespace.h"
-#include "encoding.h"
+#include "jam_namespace.h"
+#include "jam_encoding.h"
 
 #ifdef _WIN32
 
@@ -22,7 +22,7 @@
 
 #include <chrono>
 #include <thread>
-#include "active_folder.h"
+#include "jam_active_folder.h"
 
 JAM_BEGIN
 

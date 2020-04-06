@@ -24,7 +24,7 @@ struct process_info
   HANDLE hFrom;
   };
 
-int run_process(const char *path, char * const * argv, const char* current_dir, void** pr)
+inline int run_process(const char *path, char * const * argv, const char* current_dir, void** pr)
   {
   STARTUPINFOW siStartInfo;
   JAM::process_info *cp;

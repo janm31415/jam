@@ -3,9 +3,9 @@
 
 #include <jamlib/jam.h>
 
-#include <utils/encoding.h>
-#include <utils/exepath.h>
-#include <utils/filename.h>
+#include <utils/jam_encoding.h>
+#include <utils/jam_exepath.h>
+#include <utils/jam_filename.h>
 
 #include <string>
 #include <sstream>

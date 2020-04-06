@@ -81,8 +81,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "/W4 /MP /GF /O2 /Ob2 /Oi /Ot /MD /Zi /DNDEBUG")
 endif (WIN32)
 
 # general build definitions
-add_definitions(-D_UNICODE)
-add_definitions(-DUNICODE)
+#add_definitions(-D_UNICODE)
+#add_definitions(-DUNICODE)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 
 if (WIN32)

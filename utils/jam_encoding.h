@@ -1,14 +1,10 @@
 #pragma once
-#include "namespace.h"
+#include "jam_namespace.h"
 #include <fstream>
 #include <string>
-#include "utf8.h"
+#include "jam_utf8.h"
 
 JAM_BEGIN
-
-std::wstring convert_string_to_wstring(const std::string& str);
-std::string convert_wstring_to_string(const std::wstring& str);
-bool valid_utf8_file(const std::wstring& filename);
 
 inline std::wstring convert_string_to_wstring(const std::string& str)
   {

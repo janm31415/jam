@@ -1,7 +1,7 @@
 #pragma once
 
-#include "namespace.h"
-#include "encoding.h"
+#include "jam_namespace.h"
+#include "jam_encoding.h"
 #include <vector>
 
 #ifdef _WIN32

@@ -1,16 +1,16 @@
 
 set(HDRS
-active_folder.h
-encoding.h
-exepath.h
-filename.h
-namespace.h
-pipe.h
-process.h
-utf8.h
-utf8_checked.h
-utf8_core.h
-utf8_unchecked.h
+jam_active_folder.h
+jam_encoding.h
+jam_exepath.h
+jam_filename.h
+jam_namespace.h
+jam_pipe.h
+jam_process.h
+jam_utf8.h
+jam_utf8_checked.h
+jam_utf8_core.h
+jam_utf8_unchecked.h
 )
 	
 set(SRCS
