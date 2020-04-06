@@ -1,16 +1,16 @@
 #pragma once
 
-#include "namespace.h"
+#include "jam_namespace.h"
 
 #ifdef _WIN32
 #include <windows.h>
-#include "encoding.h"
+#include "jam_encoding.h"
 #include <string>
 #else
 #include <unistd.h>
 #endif
 
-#include "active_folder.h"
+#include "jam_active_folder.h"
 
 JAM_BEGIN
 

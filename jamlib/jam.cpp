@@ -1,7 +1,7 @@
 #include "jam.h"
 #include "parse.h"
-#include <utils/pipe.h>
-#include <utils/process.h>
+#include <utils/jam_pipe.h>
+#include <utils/jam_process.h>
 #include "error.h"
 #include <fstream>
 #include <iostream>
@@ -12,8 +12,8 @@
 #include <regex>
 #include <thread>
 
-#include <utils/utf8.h>
-#include <utils/filename.h>
+#include <utils/jam_utf8.h>
+#include <utils/jam_filename.h>
 
 namespace jamlib
   {

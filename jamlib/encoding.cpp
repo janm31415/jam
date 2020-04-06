@@ -1,5 +1,5 @@
 #include "encoding.h"
-#include <utils/encoding.h>
+#include <utils/jam_encoding.h>
 #include <map>
 #include <vector>
 #include <fstream>

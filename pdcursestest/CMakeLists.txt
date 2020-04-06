@@ -1,13 +1,18 @@
 if (WIN32)
 
-set(SDL_INCLUDE_DIR "C:/Program Files/SDL2/include/SDL2")
+set(SDL_INCLUDE_DIR "C:/Program Files/SDL2/include/SDL2/")
 set(SDL_LIBRARIES "C:/Program Files/SDL2/lib/SDL2.lib" "C:/Program Files/SDL2/lib/SDL2main.lib")
+
+set(SDL_TTF_INCLUDE_DIR "C:/Program Files/SDL_ttf/include/SDL2")
+set(SDL_TTF_LIBRARIES "C:/Program Files/SDL_ttf/lib/SDL2_ttf.lib" "C:/Program Files/SDL_ttf/lib/freetype248.lib")
 
 endif (WIN32)
 
 if (UNIX)
   set(SDL_INCLUDE_DIR "/usr/include/SDL2/")
   set(SDL_LIBRARIES "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so" "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so.0")
+  set(SDL_TTF_INCLUDE_DIR "/usr/include/SDL2/")
+  set(SDL_TTF_LIBRARIES "/usr/lib/x86_64-linux-gnu/libSDL2_ttf-2.0.so" "/usr/lib/x86_64-linux-gnu/libSDL2_ttf-2.0.so.0")
 endif (UNIX)
 
 set(HDRS
@@ -50,10 +55,12 @@ target_include_directories(pdcursestest
     ${CMAKE_CURRENT_SOURCE_DIR}/../
 	  ${CMAKE_CURRENT_SOURCE_DIR}/../pdcurses/
 	  ${SDL_INCLUDE_DIR}
+      ${SDL_TTF_INCLUDE_DIR}
     )	
 	
 target_link_libraries(pdcursestest
     PRIVATE
     pdcurses
     ${SDL_LIBRARIES}
+    ${SDL_TTF_LIBRARIES}
     )	
