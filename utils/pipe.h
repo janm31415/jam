@@ -40,7 +40,7 @@ struct pipe_process
   HANDLE hFrom;
   };
 
-inline int create_pipe(const char *path, const char** argv, const char* current_dir, void** pr)
+inline int create_pipe(const char *path, char * const * argv, const char* current_dir, void** pr)
   {
   HANDLE hChildStdinRd, hChildStdinWr, hChildStdoutRd, hChildStdoutWr;
   HANDLE hChildStdinWrDup, hChildStdoutRdDup;

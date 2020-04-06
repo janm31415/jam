@@ -242,7 +242,7 @@ namespace jamlib
         std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
         auto path = folder + executable_name;
-        char* const* argv = new char*[parameters.size() + 2];
+        char** argv = new char*[parameters.size() + 2];
         argv[0] = const_cast<char*>(path.c_str());
         for (int j = 0; j < parameters.size(); ++j)  
           argv[j + 1] = const_cast<char*>(parameters[j].c_str());
@@ -269,7 +269,7 @@ namespace jamlib
         std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
         auto path = folder + executable_name;
-        char* const* argv = new char*[parameters.size() + 2];
+        char** argv = new char*[parameters.size() + 2];
         argv[0] = const_cast<char*>(path.c_str());
         for (int j = 0; j < parameters.size(); ++j)  
           argv[j + 1] = const_cast<char*>(parameters[j].c_str());
@@ -335,7 +335,7 @@ namespace jamlib
         std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
         auto path = folder + executable_name;
-        char* const* argv = new char*[parameters.size() + 2];
+        char** argv = new char*[parameters.size() + 2];
         argv[0] = const_cast<char*>(path.c_str());
         for (int j = 0; j < parameters.size(); ++j)  
           argv[j + 1] = const_cast<char*>(parameters[j].c_str());
@@ -391,7 +391,7 @@ namespace jamlib
         std::vector<std::string> parameters;
         parse_command(executable_name, folder, parameters, cmd.command);
         auto path = folder + executable_name;
-        char* const* argv = new char*[parameters.size() + 2];
+        char** argv = new char*[parameters.size() + 2];
         argv[0] = const_cast<char*>(path.c_str());
         for (int j = 0; j < parameters.size(); ++j)  
           argv[j + 1] = const_cast<char*>(parameters[j].c_str());
