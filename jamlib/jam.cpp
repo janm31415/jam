@@ -285,7 +285,7 @@ namespace jamlib
 #else
         int pipefd[3];
         //void* process = nullptr;
-        int err = JAM::create_pipe(path.c_str(), argv, , nullptr, pipefd);
+        int err = JAM::create_pipe(path.c_str(), argv, nullptr, pipefd);
         delete[] argv;
         //int err = JAM::create_pipe(executable_name.c_str(), folder.c_str(), nullptr, &process, true);
         if (err != 0)
