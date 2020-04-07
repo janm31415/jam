@@ -2,6 +2,11 @@
 
 #include <curses.h>
 
+#ifndef _WIN32
+#include <math.h>
+#endif
+
+
 namespace
   {
   short conv_rgb(int clr)

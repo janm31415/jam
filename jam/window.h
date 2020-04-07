@@ -34,7 +34,11 @@ struct window
   std::wstring piped_prompt;
   uint32_t piped_prompt_index;
   std::vector<std::string> piped_prompt_history;
+#ifdef _WIN32
   void* process;
+#else
+  int process[3];
+#endif
   };
 
 //void draw(window w, jamlib::app_state state, const settings& sett);

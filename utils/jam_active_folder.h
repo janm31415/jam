@@ -9,6 +9,8 @@
 #include <linux/limits.h>
 #endif
 
+#include "jam_namespace.h"
+
 JAM_BEGIN
 
 #ifdef _WIN32

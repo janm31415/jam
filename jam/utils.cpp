@@ -1,11 +1,17 @@
 #include "utils.h"
-#include <windows.h>
 
 #include <jam_encoding.h>
 
 #include <jam_file_utils.h>
 #include <jam_exepath.h>
 #include <jam_filename.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <linux/limits.h>
+#endif
 
 bool is_modified(const jamlib::file& f)
   {
@@ -150,9 +156,15 @@ std::string get_file_path(const std::string& filename, const std::string& window
       return path;
       }
     }
+#ifdef _WIN32
   wchar_t buf[MAX_PATH];
   GetCurrentDirectoryW(MAX_PATH, buf);
   std::string dir = JAM::convert_wstring_to_string(std::wstring(buf));
+#else
+  char buf[PATH_MAX];
+  getcwd(buf, sizeof(buf));
+  std::string dir(buf);
+#endif
   possible_executables = JAM::get_files_from_directory(dir, false);
   for (const auto& path : possible_executables)
     {

@@ -73,8 +73,11 @@ namespace
 
 window::window(int ix, int iy, int icols, int irows, uint32_t fid, uint32_t nid, bool command_window) : file_id(fid),
 nephew_id(nid), is_command_window(command_window), file_pos(0), file_col(0), wordwrap_row(0), word_wrap(true), scroll_fraction(0.1),
-piped(false), highlight_comments(true), piped_prompt_index(0), process(nullptr), previous_file_pos(-1), previous_file_pos_was_comment(false)
+piped(false), highlight_comments(true), piped_prompt_index(0), previous_file_pos(-1), previous_file_pos_was_comment(false)
   {
+#ifdef _WIN32
+    process = nullptr;
+#endif
   if (command_window)
     word_wrap = true;
   resize(icols, irows);
@@ -88,10 +91,12 @@ window::~window()
 void window::kill_pipe()
   {
   if (piped)
-    {
+    {      
     JAM::destroy_pipe(process, 9);
     piped = false;
+  #ifdef _WIN32
     process = nullptr;
+  #endif
     }
   }
 

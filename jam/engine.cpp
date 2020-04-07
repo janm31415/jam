@@ -298,7 +298,13 @@ app_state resize_font(app_state state, int font_size)
   //pdc_ttffont = TTF_OpenFont("C:/Windows/Fonts/consola.ttf", pdc_font_size);
 
   if (!pdc_ttffont)
+  {
+    #ifdef _WIN32
     pdc_ttffont = TTF_OpenFont("C:/Windows/Fonts/consola.ttf", pdc_font_size);
+    #else
+    pdc_ttffont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", pdc_font_size);
+    #endif
+  }
 
   TTF_SizeText(pdc_ttffont, "W", &font_width, &font_height);
   stdscr->_clear = TRUE;
@@ -2838,7 +2844,11 @@ app_state make_window_piped(app_state state, int64_t file_id, std::string win_co
 
   auto& w = state.windows[state.file_id_to_window_id[state.file_state.active_file]];
   int err = 1;
+#ifdef _WIN32
   err = JAM::create_pipe(path.c_str(), argv, nullptr, &w.process);
+#else
+  err = JAM::create_pipe(path.c_str(), argv, nullptr, w.process);
+#endif
   delete[] argv;
   if (err != 0)
     {
@@ -3621,7 +3631,11 @@ std::optional<app_state> execute(app_state state, int64_t p1, int64_t p2, int64_
     catch (std::runtime_error e)
       {
       w.piped = false;
+#ifdef _WIN32
       w.process = nullptr;
+#else
+      w.process[0] = w.process[1] = w.process[2] = -1;
+#endif
       state = add_error_text(state, e.what());
       return state;
       }
@@ -4323,7 +4337,11 @@ app_state enter(app_state state)
       catch (std::runtime_error e)
         {
         w.piped = false;
-        w.process = nullptr;
+#ifdef _WIN32
+      w.process = nullptr;
+#else
+      w.process[0] = w.process[1] = w.process[2] = -1;
+#endif
         state = add_error_text(state, e.what());
         return state;
         }
@@ -4561,7 +4579,11 @@ app_state check_pipes(bool& modifications, app_state state)
       catch (std::runtime_error e)
         {
         w.piped = false;
-        w.process = nullptr;
+#ifdef _WIN32
+      w.process = nullptr;
+#else
+      w.process[0] = w.process[1] = w.process[2] = -1;
+#endif
         state = add_error_text(state, e.what());
         return state;
         }
