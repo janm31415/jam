@@ -1,6 +1,7 @@
 
 set(HDRS
 jam_active_folder.h
+jam_dirent.h
 jam_encoding.h
 jam_exepath.h
 jam_filename.h

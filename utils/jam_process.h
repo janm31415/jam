@@ -20,8 +20,6 @@ struct process_info
   {
   HANDLE hProcess;
   DWORD pid;
-  HANDLE hTo;
-  HANDLE hFrom;
   };
 
 inline int run_process(const char *path, char * const * argv, const char* current_dir, void** pr)
@@ -87,8 +85,6 @@ inline int run_process(const char *path, char * const * argv, const char* curren
   cp = (JAM::process_info *)calloc(1, sizeof(JAM::process_info));
   cp->hProcess = piProcInfo.hProcess;
   cp->pid = piProcInfo.dwProcessId;
-  cp->hFrom = NULL;
-  cp->hTo = NULL;
 
   *pr = (void *)cp;
 
@@ -104,17 +100,6 @@ inline void destroy_process(void* pr, int signal)
   if (cp == nullptr)
     return;
 
-
-  /* TerminateProcess is considered harmful, so... */
-  CloseHandle(cp->hTo); /* Closing this will give the child an EOF and hopefully kill it */
-  if (cp->hFrom) CloseHandle(cp->hFrom);  /* if NULL, InputThread will close it */
-                                          /* The following doesn't work because the chess program
-                                          doesn't "have the same console" as WinBoard.  Maybe
-                                          we could arrange for this even though neither WinBoard
-                                          nor the chess program uses a console for stdio? */
-                                          /*!!if (signal) GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, cp->pid);*/
-
-                                          /* [AS] Special termination modes for misbehaving programs... */
   if (signal == 9)
     {
     result = TerminateProcess(cp->hProcess, 0);
@@ -138,15 +123,12 @@ inline void destroy_process(void* pr, int signal)
 
 inline int run_process(const char *path, char * const * argv, const char* current_dir, pid_t* process)
   {
-  pid_t pid = 0;
-  
-  pid = fork();
+  pid_t pid = fork();
+    
   if (pid < 0)
     throw std::runtime_error("failed to fork");
   if (pid == 0)
-    {    
-    prctl(PR_SET_PDEATHSIG, SIGTERM);
-
+    {        
     if (execv(path, argv) == -1)
       throw std::runtime_error("failed to pipe (execl failed)");
     exit(1);
@@ -157,11 +139,16 @@ inline int run_process(const char *path, char * const * argv, const char* curren
   return 0;
   }
 
-inline void destroy_process(pid_t process, int)
+inline void destroy_process(pid_t process, int signal)
   {
-  kill(process, SIGKILL);
-  int status;
-  waitpid(process, &status, 0);
+  if (signal == 9)
+    kill(process, SIGKILL);
+
+  if (signal == 10)
+    {
+    int status;
+    waitpid(process, &status, 0);
+    }
   }
 
 #endif
