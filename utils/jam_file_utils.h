@@ -30,8 +30,15 @@ inline bool file_exists(const std::string& filename)
 #else
   if (filename.empty())
     return false;
-  struct stat buffer;
-  return (stat (filename.c_str(), &buffer) == 0);
+  if (FILE *file = fopen(filename.c_str(), "r")) 
+    {
+    fclose(file);
+    return true;
+    }
+  else 
+    {
+    return false;
+    }
 #endif
   }
 
