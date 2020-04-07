@@ -2,8 +2,8 @@
 
 #include "pref_file.h"
 
-#include "file_utils.h"
-
+#include <jam_filename.h>
+#include <jam_exepath.h>
 
 settings read_settings(const char* filename)
   {
@@ -40,7 +40,7 @@ settings read_settings(const char* filename)
   s.selection_tag_blue = 239;
 
   s.font_size = 17;
-  s.font = get_folder(get_executable_path()) + "Font/DejaVuSansMono.ttf";
+  s.font = JAM::get_folder(JAM::get_executable_path()) + "Font/DejaVuSansMono.ttf";
 
   s.command_text = "";
   s.column_text = "New Cut Paste Snarf Delcol";

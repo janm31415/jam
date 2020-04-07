@@ -18,10 +18,8 @@ endif (UNIX)
 set(HDRS
 clipboard.h
 colors.h
-dirent.h
 engine.h
 error.h
-file_utils.h
 grid.h
 keyboard.h
 mouse.h
@@ -40,7 +38,6 @@ clipboard.cpp
 colors.cpp
 engine.cpp
 error.cpp
-file_utils.cpp
 grid.cpp
 jam.rc
 keyboard.cpp

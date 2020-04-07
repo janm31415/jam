@@ -5,9 +5,10 @@
 #include "mouse.h"
 #include "keyboard.h"
 #include "utils.h"
-#include "file_utils.h"
 #include "serialize.h"
 #include <jam_active_folder.h>
+#include <jam_file_utils.h>
+#include <jam_exepath.h>
 
 #include <SDL.h>
 #include <curses.h>
@@ -419,7 +420,7 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
       {
       uint32_t file_id = state.windows[j].file_id;
       std::string filename = remove_quotes_from_path(state.file_state.files[file_id].filename);
-      if (file_exists(filename))
+      if (JAM::file_exists(filename))
         {
         std::stringstream load_file_command;
         load_file_command << "r " << state.file_state.files[file_id].filename;
@@ -438,7 +439,7 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
           state.windows[j].file_pos = 0;
 
         }
-      else if (is_directory(filename))
+      else if (JAM::is_directory(filename))
         {
         state.file_state.files[file_id].content = get_folder_list(filename);
         auto d = state.file_state.files[file_id].dot;
@@ -493,7 +494,7 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
   for (int j = 1; j < argc; ++j) // open any files/folders that were given as argument, if not yet opened
     {
     std::string filename = (argv[j]);
-    if (is_directory(filename))
+    if (JAM::is_directory(filename))
       filename = cleanup_foldername(filename);
     bool already_open = false;
     for (const auto& f : state.file_state.files)
@@ -506,7 +507,7 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
       }
     if (already_open)
       continue;
-    if (file_exists(filename))
+    if (JAM::file_exists(filename))
       {
       if (state.g.columns.empty() || state.g.columns.front().items.empty())
         state = *load_file(filename, state, -1);
@@ -517,7 +518,7 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
         state = *load_file(filename, state, state.file_state.active_file);
         }
       }
-    else if (is_directory(filename))
+    else if (JAM::is_directory(filename))
       {
       state = *load_folder(filename, state, -1);
       }
@@ -610,7 +611,7 @@ std::string get_command_text(app_state state, uint32_t command_id)
   bool undo = !textf.history.empty() && textf.undo_redo_index > 0;
   bool redo = !textf.history.empty() && textf.undo_redo_index < textf.history.size();
 
-  bool get = is_directory(f.filename);
+  bool get = JAM::is_directory(f.filename);
   //bool is_dir = 
   std::stringstream str;
   str << " Del";
@@ -3008,11 +3009,11 @@ jamlib::buffer get_folder_list(const std::string& foldername)
   folder_content.push_back('.');
   folder_content.push_back('\n');
 
-  auto items = get_subdirectories_from_directory(foldername, false);
+  auto items = JAM::get_subdirectories_from_directory(foldername, false);
 
   for (auto& item : items)
     {
-    item = get_filename(item);
+    item = JAM::get_filename(item);
     auto witem = JAM::convert_string_to_wstring(item);
     for (auto ch : witem)
       folder_content.push_back(ch);
@@ -3020,11 +3021,11 @@ jamlib::buffer get_folder_list(const std::string& foldername)
     folder_content.push_back('\n');
     }
 
-  items = get_files_from_directory(foldername, false);
+  items = JAM::get_files_from_directory(foldername, false);
 
   for (auto& item : items)
     {
-    item = get_filename(item);
+    item = JAM::get_filename(item);
     auto witem = JAM::convert_string_to_wstring(item);
     for (auto ch : witem)
       folder_content.push_back(ch);
@@ -3041,10 +3042,10 @@ std::optional<app_state> get_command(app_state state, int64_t id, const std::str
     return state;
   auto& f = state.file_state.files[get_active_file_id(state, id)];
 
-  if (is_directory(f.filename))
+  if (JAM::is_directory(f.filename))
     f.content = get_folder_list(f.filename);
 
-  if (file_exists(f.filename))
+  if (JAM::file_exists(f.filename))
     {
     state.file_state.active_file = get_active_file_id(state, id);
     std::stringstream load_file_command;
@@ -3131,19 +3132,19 @@ std::optional<app_state> ascii_command(app_state state, int64_t id, const std::s
 
 std::optional<app_state> dejavu_command(app_state state, int64_t, const std::string&)
   {
-  gp_settings->font = get_folder(get_executable_path()) + "Font/DejaVuSansMono.ttf";
+  gp_settings->font = JAM::get_folder(JAM::get_executable_path()) + "Font/DejaVuSansMono.ttf";
   return resize_font(state, gp_settings->font_size);
   }
 
 std::optional<app_state> hack_command(app_state state, int64_t, const std::string&)
   {
-  gp_settings->font = get_folder(get_executable_path()) + "Font/Hack-Regular.ttf";
+  gp_settings->font = JAM::get_folder(JAM::get_executable_path()) + "Font/Hack-Regular.ttf";
   return resize_font(state, gp_settings->font_size);
   }
 
 std::optional<app_state> noto_command(app_state state, int64_t, const std::string&)
   {
-  gp_settings->font = get_folder(get_executable_path()) + "Font/NotoMono-Regular.ttf";
+  gp_settings->font = JAM::get_folder(JAM::get_executable_path()) + "Font/NotoMono-Regular.ttf";
   return resize_font(state, gp_settings->font_size);
   }
 
@@ -3940,7 +3941,7 @@ std::optional<app_state> load_folder(std::string foldername, app_state state, in
   int icols = get_cols();
   int irows = get_lines();
 
-  if (id >= 0 && !state.file_state.files[id].filename.empty() && is_directory(state.file_state.files[id].filename))
+  if (id >= 0 && !state.file_state.files[id].filename.empty() && JAM::is_directory(state.file_state.files[id].filename))
     {
     auto path = state.file_state.files[id].filename;
     id = get_active_file_id(state, id);
@@ -4032,22 +4033,22 @@ std::optional<app_state> load(app_state state, int64_t p1, int64_t p2, int64_t i
     return state;
 
   std::string filename = state.file_state.files[get_active_file_id(state, id)].filename;
-  std::string folder = get_folder(filename);
+  std::string folder = JAM::get_folder(filename);
 
   if (folder.empty())
-    folder = get_executable_path();
+    folder = JAM::get_executable_path();
 
   if (folder.back() != '\\' && folder.back() != '/')
     folder.push_back('/');
   std::string newfilename = folder + cmd;
 
-  if (file_exists(newfilename))
+  if (JAM::file_exists(newfilename))
     return load_file(newfilename, state, state.file_state.active_file);
 
-  if (file_exists(cmd))
+  if (JAM::file_exists(cmd))
     return load_file(cmd, state, state.file_state.active_file);
 
-  if (is_directory(newfilename))
+  if (JAM::is_directory(newfilename))
     {
     if (cmd == "..")
       {
@@ -4055,7 +4056,7 @@ std::optional<app_state> load(app_state state, int64_t p1, int64_t p2, int64_t i
       newfilename.pop_back();
       if (newfilename.find('/') == std::string::npos && newfilename.find('\\') == std::string::npos)
         newfilename = folder;
-      newfilename = get_folder(newfilename);
+      newfilename = JAM::get_folder(newfilename);
       if (newfilename.back() != '\\' && newfilename.back() != '/')
         newfilename.push_back('/');
       if (newfilename.back() == '\\')
@@ -4064,7 +4065,7 @@ std::optional<app_state> load(app_state state, int64_t p1, int64_t p2, int64_t i
     return load_folder(newfilename, state, id);
     }
 
-  if (is_directory(cmd))
+  if (JAM::is_directory(cmd))
     return load_folder(cmd, state, id);
 
   state.file_state.active_file = get_active_file_id(state, id);

@@ -1,9 +1,11 @@
 #include "utils.h"
-#include "file_utils.h"
 #include <windows.h>
 
 #include <jam_encoding.h>
 
+#include <jam_file_utils.h>
+#include <jam_exepath.h>
+#include <jam_filename.h>
 
 bool is_modified(const jamlib::file& f)
   {
@@ -11,7 +13,7 @@ bool is_modified(const jamlib::file& f)
     return false;
   if (f.filename.front() == '+')
     return false;
-  if (is_directory(f.filename))
+  if (JAM::is_directory(f.filename))
     return false;
   return f.modification_mask != 0;
   }
@@ -22,7 +24,7 @@ bool ask_user_to_save_modified_file(const jamlib::file& f)
     return false;
   if (f.filename.front() == '+')
     return false;
-  if (is_directory(f.filename))
+  if (JAM::is_directory(f.filename))
     return false;
   return (f.modification_mask & 1) == 1;
   }
@@ -114,36 +116,36 @@ std::string remove_quotes_from_path(std::string str)
 
 std::string get_file_in_executable_path(const std::string& filename)
   {
-  auto folder = get_folder(get_executable_path());
+  auto folder = JAM::get_folder(JAM::get_executable_path());
   return folder + filename;
   }
 
 std::string get_file_path(const std::string& filename, const std::string& window_filename)
   {
-  if (!get_folder(filename).empty())
+  if (!JAM::get_folder(filename).empty())
     {
-    if (file_exists(filename))
+    if (JAM::file_exists(filename))
       return filename;
     }
   if (!window_filename.empty())
     {
-    auto window_folder = get_folder(window_filename);
-    auto possible_executables = get_files_from_directory(window_folder, false);
+    auto window_folder = JAM::get_folder(window_filename);
+    auto possible_executables = JAM::get_files_from_directory(window_folder, false);
     for (const auto& path : possible_executables)
       {
-      auto f = get_filename(path);
-      if (f == filename || remove_extension(f) == filename)
+      auto f = JAM::get_filename(path);
+      if (f == filename || JAM::remove_extension(f) == filename)
         {
         return path;
         }
       }
     }
-  auto executable_path = get_folder(get_executable_path());
-  auto possible_executables = get_files_from_directory(executable_path, false);
+  auto executable_path = JAM::get_folder(JAM::get_executable_path());
+  auto possible_executables = JAM::get_files_from_directory(executable_path, false);
   for (const auto& path : possible_executables)
     {
-    auto f = get_filename(path);
-    if (f == filename || remove_extension(f) == filename)
+    auto f = JAM::get_filename(path);
+    if (f == filename || JAM::remove_extension(f) == filename)
       {
       return path;
       }
@@ -151,11 +153,11 @@ std::string get_file_path(const std::string& filename, const std::string& window
   wchar_t buf[MAX_PATH];
   GetCurrentDirectoryW(MAX_PATH, buf);
   std::string dir = JAM::convert_wstring_to_string(std::wstring(buf));
-  possible_executables = get_files_from_directory(dir, false);
+  possible_executables = JAM::get_files_from_directory(dir, false);
   for (const auto& path : possible_executables)
     {
-    auto f = get_filename(path);
-    if (f == filename || remove_extension(f) == filename)
+    auto f = JAM::get_filename(path);
+    if (f == filename || JAM::remove_extension(f) == filename)
       {
       return path;
       }

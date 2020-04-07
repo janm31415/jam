@@ -4,6 +4,7 @@ jam_active_folder.h
 jam_encoding.h
 jam_exepath.h
 jam_filename.h
+jam_file_utils.h
 jam_namespace.h
 jam_pipe.h
 jam_process.h
