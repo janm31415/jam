@@ -6,6 +6,7 @@
 #ifdef _WIN32
 #include "jam_dirent.h"
 #else
+#include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <linux/limits.h>
@@ -27,12 +28,10 @@ inline bool file_exists(const std::string& filename)
   f.close();
   return true;
 #else
-  std::ifstream f;
-  f.open(filename, std::ifstream::in);
-  if (f.fail())
+  if (filename.empty())
     return false;
-  f.close();
-  return true;
+  struct stat buffer;
+  return (stat (filename.c_str(), &buffer) == 0);
 #endif
   }
 
