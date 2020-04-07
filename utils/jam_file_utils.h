@@ -17,31 +17,6 @@
 
 JAM_BEGIN
 
-inline bool file_exists(const std::string& filename)
-  {
-#ifdef _WIN32
-  std::wstring wfilename = convert_string_to_wstring(filename);
-  std::ifstream f;
-  f.open(wfilename, std::ifstream::in);
-  if (f.fail())
-    return false;
-  f.close();
-  return true;
-#else
-  if (filename.empty())
-    return false;
-  if (FILE *file = fopen(filename.c_str(), "r")) 
-    {
-    fclose(file);
-    return true;
-    }
-  else 
-    {
-    return false;
-    }
-#endif
-  }
-
 inline bool is_directory(const std::string& directory)
   {
 #ifdef _WIN32
@@ -73,6 +48,24 @@ inline bool is_directory(const std::string& directory)
   return result;
 #endif  
   }
+
+inline bool file_exists(const std::string& filename)
+  {
+#ifdef _WIN32
+  std::wstring wfilename = convert_string_to_wstring(filename);
+  std::ifstream f;
+  f.open(wfilename, std::ifstream::in);
+  if (f.fail())
+    return false;
+  f.close();
+  return true;
+#else
+  if (is_directory(filename)) // This should not be necessary, but otherwise crash with gcc on Ubuntu
+    return false;
+  struct stat buffer;
+  return (stat(filename.c_str(), &buffer) == 0);
+#endif
+  }  
 
 inline std::vector<std::string> get_files_from_directory(const std::string& d, bool include_subfolders)
   {
