@@ -416,8 +416,8 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
   getmaxyx(stdscr, maxrow, maxcol);
 
   // load previously saved state
-  if (argc < 2)
-    state = load_from_file(get_file_in_executable_path("temp.txt"));
+  //if (argc < 2)
+  state = load_from_file(get_file_in_executable_path("temp.txt"));
   uint32_t sz = (uint32_t)state.windows.size();
   auto active_file = state.file_state.active_file;
   for (uint32_t j = 0; j < sz; ++j)
@@ -443,7 +443,7 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
         state.file_state.files[file_id].dot = d;
         if (state.windows[j].file_pos > state.file_state.files[file_id].content.size())
           state.windows[j].file_pos = 0;
-
+        state.file_state.files[file_id].filename = flip_backslash_to_slash_in_filename(cleanup(filename));
         }
       else if (JAM::is_directory(filename))
         {
@@ -499,9 +499,10 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
 
   for (int j = 1; j < argc; ++j) // open any files/folders that were given as argument, if not yet opened
     {
-    std::string filename = (argv[j]);
+    std::string filename = cleanup(argv[j]);
     if (JAM::is_directory(filename))
-      filename = cleanup_foldername(filename);
+      filename = cleanup_foldername(filename);    
+    filename = flip_backslash_to_slash_in_filename(filename);
     bool already_open = false;
     for (const auto& f : state.file_state.files)
       {
