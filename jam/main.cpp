@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <SDL_syswm.h>
 #include <curses.h>
 
 
@@ -18,6 +19,11 @@ extern "C"
   {
 #include <sdl2/pdcsdl.h>
   }
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 
 /* GIMP RGBA C-Source image dump (jam_icon.c) */
 
@@ -512,9 +518,84 @@ static gimp_image_type gimp_image = {
     "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
   };
 
+#ifdef _WIN32
+int CopyEventFilter(void* userdata, SDL_Event* event)
+  {
+  if (event->type == SDL_SYSWMEVENT)
+    {    
+    if (event->syswm.msg->msg.win.msg == WM_COPYDATA)
+      {      
+      COPYDATASTRUCT* p_copy_data = reinterpret_cast<COPYDATASTRUCT*>(event->syswm.msg->msg.win.lParam);
+      if (!p_copy_data)
+        return 0;
+      if (p_copy_data->dwData == 0)
+        {
+        async_messages* p_messages = reinterpret_cast<async_messages*>(userdata);
+        std::string message_data(static_cast<char *>(p_copy_data->lpData));   
+        async_message m;
+        m.m = ASYNC_MESSAGE_LOAD;
+        m.str = message_data;
+        p_messages->push(m);
+        }
+      }
+    }
+  return 0;
+  }
+#endif
 
 int main(int argc, char** argv)
   {
+#ifdef _WIN32
+  bool the_first_one = true;
+  ::SetLastError(NO_ERROR);
+  ::CreateMutex(NULL, false, "jamInstance");
+  if (::GetLastError() == ERROR_ALREADY_EXISTS)
+    the_first_one = false;
+
+  if (!the_first_one)
+    {
+    HWND h_jam = ::FindWindow(NULL, "jam");
+    for (int i = 0; !h_jam && i < 5; ++i)
+      {
+      Sleep(100);
+      h_jam = ::FindWindow(NULL, "jam");
+      }
+
+    if (h_jam)
+      {
+      int sw = 0;
+
+      if (::IsZoomed(h_jam))
+        sw = SW_MAXIMIZE;
+      else if (::IsIconic(h_jam))
+        sw = SW_RESTORE;
+
+      if (sw != 0)
+        ::ShowWindow(h_jam, sw);
+
+      ::SetForegroundWindow(h_jam);
+
+      if (argc > 1)
+        {
+        HINSTANCE instance = GetModuleHandle(NULL);
+        for (int i = 1; i < argc; ++i)
+          {
+          std::string text(argv[i]);
+          COPYDATASTRUCT data_to_copy;
+          data_to_copy.dwData = 0;
+          data_to_copy.lpData = (void*)text.c_str();
+          data_to_copy.cbData = (long)(text.length() + 1)*(sizeof(char));
+          ::SendMessage(h_jam, WM_COPYDATA, reinterpret_cast<WPARAM>(instance), reinterpret_cast<LPARAM>(&data_to_copy));
+          Sleep(10000);
+          }
+        }
+
+      return 0;
+      }
+    }
+#endif
+
+
   /* Initialize SDL */
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -536,13 +617,13 @@ int main(int argc, char** argv)
   uint32_t rmask = 0x000000ff;
   uint32_t gmask = 0x0000ff00;
   uint32_t bmask = 0x00ff0000;
-  
+
   uint32_t amask = (gimp_image.bytes_per_pixel == 3) ? 0 : 0xff000000;
   pdc_icon = SDL_CreateRGBSurfaceFrom((void*)gimp_image.pixel_data, gimp_image.width,
     gimp_image.height, gimp_image.bytes_per_pixel * 8, gimp_image.bytes_per_pixel*gimp_image.width,
     rmask, gmask, bmask, amask);
   JAM::active_folder af(JAM::get_folder(JAM::get_executable_path()).c_str()); // setting active folder to module folder so that icon is loaded correctly
-  
+
   initscr();
   }
   //resize_term(60, 200);
@@ -553,6 +634,11 @@ int main(int argc, char** argv)
   PDC_set_title("Jam");
 
   engine e(w, h, argc, argv, read_settings(get_file_in_executable_path("jam_settings.json").c_str()));
+
+#ifdef _WIN32
+  SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
+  SDL_AddEventWatch(&CopyEventFilter, &e.messages);
+#endif
 
   e.run();
 

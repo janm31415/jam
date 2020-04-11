@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "window.h"
 #include "grid.h"
+#include "async_messages.h"
 
 #include <jamlib/jam.h>
 #include <vector>
@@ -23,6 +24,7 @@ struct engine
   {
   app_state state;
   settings sett;
+  async_messages messages;
 
   engine(int w, int h, int argc, char** argv, const settings& s);
   ~engine();

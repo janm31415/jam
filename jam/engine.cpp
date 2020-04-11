@@ -11,6 +11,8 @@
 #include <jam_exepath.h>
 
 #include <SDL.h>
+#include <SDL_syswm.h>
+
 #include <curses.h>
 #include <sstream>
 
@@ -4662,7 +4664,17 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
       {
       keyb.handle_event(event);
       switch (event.type)
+        {        
+        case SDL_SYSWMEVENT:
         {
+#ifdef _WIN32
+        if (event.syswm.msg->msg.win.msg == WM_COPYDATA)
+          {
+          return state; // return so that we can process the messages queue
+          }
+#endif
+        break;
+        }
         case SDL_DROPFILE:
         {
         auto dropped_filedir = event.drop.file;
@@ -5530,6 +5542,16 @@ void engine::run()
   SDL_UpdateWindowSurface(pdc_window);
   while (auto new_state = process_input(state, sett))
     {
+    while (!messages.empty())
+      {
+      auto m = messages.pop();
+      if (m.m == ASYNC_MESSAGE_LOAD && JAM::file_exists(m.str))
+        {
+        new_state = load_file(m.str, *new_state, new_state->file_state.active_file);
+        //new_state = enlarge_window_as_much_as_possible(*new_state, new_state->file_state.active_file);
+        }
+      }
+
     state = draw(*new_state, sett);
 
     SDL_UpdateWindowSurface(pdc_window);

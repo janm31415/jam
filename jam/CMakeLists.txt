@@ -16,6 +16,7 @@ if (UNIX)
 endif (UNIX)
 
 set(HDRS
+async_messages.h
 clipboard.h
 colors.h
 engine.h
