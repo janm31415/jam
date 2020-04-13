@@ -300,13 +300,13 @@ app_state resize_font(app_state state, int font_size)
   //pdc_ttffont = TTF_OpenFont("C:/Windows/Fonts/consola.ttf", pdc_font_size);
 
   if (!pdc_ttffont)
-  {
-    #ifdef _WIN32
+    {
+#ifdef _WIN32
     pdc_ttffont = TTF_OpenFont("C:/Windows/Fonts/consola.ttf", pdc_font_size);
-    #else
+#else
     pdc_ttffont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", pdc_font_size);
-    #endif
-  }
+#endif
+    }
 
   TTF_SizeText(pdc_ttffont, "W", &font_width, &font_height);
   stdscr->_clear = TRUE;
@@ -503,7 +503,7 @@ engine::engine(int w, int h, int argc, char** argv, const settings& s) : sett(s)
     {
     std::string filename = cleanup(argv[j]);
     if (JAM::is_directory(filename))
-      filename = cleanup_foldername(filename);    
+      filename = cleanup_foldername(filename);
     filename = flip_backslash_to_slash_in_filename(filename);
     bool already_open = false;
     for (const auto& f : state.file_state.files)
@@ -1968,10 +1968,10 @@ app_state move_window_to_top(app_state state, uint64_t c, int64_t ci)
   auto col_item = column.items[ci];
   for (int i = ci - 1; i >= 0; --i)
     column.items[i + 1] = column.items[i];
-  column.items[0] = col_item;  
+  column.items[0] = col_item;
   column.items[0].top_layer = 0.0;
   column.items[0].bottom_layer = column.items[1].top_layer;
-  for (int i = 1; i < column.items.size()-1; ++i)
+  for (int i = 1; i < column.items.size() - 1; ++i)
     column.items[i].bottom_layer = column.items[i + 1].top_layer;
   column.items.back().bottom_layer = 1.0;
   return resize(state);
@@ -2051,8 +2051,8 @@ app_state move_window_up_down(app_state state, uint64_t c, int64_t ci, int x, in
       minimum_size_for_lower_items += get_minimum_number_of_rows(column.items[other], right - left, state);
       }
     if (irows - minimum_size_for_lower_items < y)
-      y = irows - minimum_size_for_lower_items ;
-   
+      y = irows - minimum_size_for_lower_items;
+
     col_item.top_layer = (y) / double(irows);
     if (col_item.bottom_layer <= col_item.top_layer)
       col_item.bottom_layer = ((int)std::round(col_item.top_layer*irows) + get_minimum_number_of_rows(col_item, right - left, state)) / (double)(irows);
@@ -2065,7 +2065,7 @@ app_state move_window_up_down(app_state state, uint64_t c, int64_t ci, int x, in
       invalidate_range(left, y_offset, right - left, bottom - top);
       }
 
-    double last_bottom_layer = col_item.bottom_layer;    
+    double last_bottom_layer = col_item.bottom_layer;
     for (int64_t other = (int64_t)ci + 1; other < column.items.size(); ++other)
       {
       auto& other_col_item = column.items[other];
@@ -2883,7 +2883,7 @@ app_state make_window_piped(app_state state, int64_t file_id, std::string win_co
   argv[0] = const_cast<char*>(path.c_str());
   for (int j = 0; j < parameters.size(); ++j)
     argv[j + 1] = const_cast<char*>(parameters[j].c_str());
-  argv[parameters.size() + 1] = nullptr;  
+  argv[parameters.size() + 1] = nullptr;
 
   auto& w = state.windows[state.file_id_to_window_id[state.file_state.active_file]];
   int err = 1;
@@ -3646,7 +3646,7 @@ void split_command(std::string& first, std::string& remainder, const std::string
   auto pos_quote_2 = pos_quote + 1;
   while (pos_quote_2 < command.size() && command[pos_quote_2] != '"')
     ++pos_quote_2;
-  if (pos_quote_2+1 == command.size())
+  if (pos_quote_2 + 1 == command.size())
     {
     first = command;
     return;
@@ -4325,9 +4325,9 @@ app_state enter(app_state state)
         {
         w.piped = false;
 #ifdef _WIN32
-      w.process = nullptr;
+        w.process = nullptr;
 #else
-      w.process[0] = w.process[1] = w.process[2] = -1;
+        w.process[0] = w.process[1] = w.process[2] = -1;
 #endif
         state = add_error_text(state, e.what());
         return state;
@@ -4605,9 +4605,9 @@ app_state check_pipes(bool& modifications, app_state state)
         {
         w.piped = false;
 #ifdef _WIN32
-      w.process = nullptr;
+        w.process = nullptr;
 #else
-      w.process[0] = w.process[1] = w.process[2] = -1;
+        w.process[0] = w.process[1] = w.process[2] = -1;
 #endif
         state = add_error_text(state, e.what());
         return state;
@@ -4768,6 +4768,122 @@ screen_ex_pixel find_closest_id(int x, int y, const app_state& state)
   return get_ex(y, x);
   }
 
+void get_window_first_last_pos(int64_t& p1, int64_t& p2, const app_state& state, int64_t file_id)
+  {
+  p1 = p2 = -1;
+  const auto& w = state.windows[state.file_id_to_window_id[file_id]];
+  const auto& f = state.file_state.files[file_id];
+
+  auto it = f.content.begin() + w.file_pos;
+  auto it_end = f.content.end();
+
+  int64_t pos = w.file_pos;
+  int64_t row = 0;
+  int64_t col = 0;
+
+  for (; it != it_end; ++it, ++pos)
+    {
+    if (*it == '\n')
+      {
+      if (w.word_wrap)
+        {
+        if (col >= w.file_col && row >= w.wordwrap_row)
+          {
+          if (p1 == -1)
+            p1 = pos;
+          //draw linefeed
+          ++col;
+          }
+        }
+      else
+        {
+        if (col >= w.file_col && col < (w.cols + w.file_col) && row < w.rows)
+          {
+          if (p1 == -1)
+            p1 = pos;
+          //draw linefeed
+          ++col;
+          }
+        }
+      col = 0;
+      ++row;
+      }
+    else
+      {
+      if (w.word_wrap)
+        {
+        if (col >= w.file_col && row >= w.wordwrap_row)
+          {
+          if (p1 == -1)
+            p1 = pos;
+          //draw char
+          ++col;
+          }
+        else
+          ++col;
+        if (col >= w.cols - 1)
+          {
+          col = 0;
+          ++row;
+          }
+        }
+      else
+        {
+        if (col >= w.file_col && col < (w.cols + w.file_col) && row < w.rows)
+          {
+          if (p1 == -1)
+            p1 = pos;
+          //draw char
+          ++col;
+          }
+        else
+          ++col;
+        }
+      }
+
+    if (row - w.wordwrap_row >= w.rows)
+      break;
+    }
+  p2 = pos;
+  }
+
+void get_window_box(int& top, int& top_without_tag, int& bottom, int& left, int& right, const app_state& state, int64_t file_id)
+  {
+  top = -1;
+  bottom = -1;
+  left = -1;
+  right = -1;
+  top_without_tag = -1;
+  for (uint32_t i = 0; i < state.g.columns.size(); ++i)
+    {
+    auto& c = state.g.columns[i];
+    for (uint32_t j = 0; j < c.items.size(); ++j)
+      {
+      auto ci = c.items[j];
+      auto& wp = state.window_pairs[ci.window_pair_id];
+      if (state.windows[wp.window_id].file_id == file_id)
+        {
+        int icols = get_cols();
+        left = (int)std::round(c.left*icols);
+        right = (int)std::round(c.right*icols);
+
+        int irows = get_available_rows(c, right - left, state);
+
+        top = (int)std::round(ci.top_layer*irows);
+        bottom = (int)std::round(ci.bottom_layer*irows);
+
+        top_without_tag = top + get_minimum_number_of_rows(ci, right - left, state);
+
+        auto y_offset = get_y_offset_from_top(c, right - left, state);
+
+        top += y_offset;
+        bottom += y_offset - 1;
+        top_without_tag += y_offset;
+        }
+      }
+    }
+  }
+
 std::optional<app_state> process_input(app_state state, const settings& sett)
   {
   SDL_Event event;
@@ -4778,7 +4894,7 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
       {
       keyb.handle_event(event);
       switch (event.type)
-        {        
+        {
         case SDL_SYSWMEVENT:
         {
 #ifdef _WIN32
@@ -5008,7 +5124,6 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
           x = event.motion.x / font_width;
           y = event.motion.y / font_height;
           p = get_ex(y, x);
-          bool jump_to_begin_or_end = true;
           int save_x = x;
           int save_y = y;
           if (p.id != mouse.middle_drag_start.id || p.type != SET_TEXT)
@@ -5036,7 +5151,6 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
             save_x = state.windows[state.file_id_to_window_id[mouse.middle_drag_start.id]].outer_x + OFFSET_FROM_SCROLLBAR;
           if (p.id != mouse.middle_drag_start.id || p.type != SET_TEXT)
             {
-            jump_to_begin_or_end = false;
             x = save_x;
             y = save_y;
             while (y > 0)
@@ -5048,7 +5162,6 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
             }
           if (p.id != mouse.middle_drag_start.id || p.type != SET_TEXT)
             {
-            jump_to_begin_or_end = false;
             x = save_x;
             y = save_y;
             while (y < (state.h / font_height))
@@ -5058,15 +5171,14 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
                 break;
               }
             }
+          x = event.motion.x / font_width;
+          p = get_ex(y, x);
+          while (x > save_x && p.id < 0)
+            {
+            p = get_ex(y, --x);
+            }
           if (p.id == mouse.middle_drag_start.id && p.type == SET_TEXT)
             {
-            if (jump_to_begin_or_end)
-              {
-              if (mouse.middle_drag_start.pos < p.pos)
-                p.pos = get_line_end(state.file_state.files[p.id], p.pos);
-              else
-                p.pos = get_line_begin(state.file_state.files[p.id], p.pos);
-              }
             mouse.middle_drag_end = skip_last_line_feed_character(state, p, mouse.middle_drag_start.pos, mouse.middle_drag_end.pos);
             }
           return state;
@@ -5094,7 +5206,6 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
           x = event.motion.x / font_width;
           y = event.motion.y / font_height;
           p = get_ex(y, x);
-          bool jump_to_begin_or_end = true;
           int save_x = x;
           int save_y = y;
           if (p.id != mouse.right_drag_start.id || p.type != SET_TEXT)
@@ -5118,41 +5229,39 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
               }
             }
           // for finding good positions up/down for selection, we move the position to the most left cursor position in the window
-          if (!state.windows[state.file_id_to_window_id[mouse.right_drag_start.id]].is_command_window)
+          if (!state.windows[state.file_id_to_window_id[mouse.right_drag_start.id]].is_command_window)          
             save_x = state.windows[state.file_id_to_window_id[mouse.right_drag_start.id]].outer_x + OFFSET_FROM_SCROLLBAR;
           if (p.id != mouse.right_drag_start.id || p.type != SET_TEXT)
             {
-            jump_to_begin_or_end = false;
             x = save_x;
             y = save_y;
             while (y > 0)
               {
-              p = get_ex(--y, x);
+              p = get_ex(--y, save_x);
               if (p.id == mouse.right_drag_start.id && p.type == SET_TEXT)
                 break;
               }
             }
           if (p.id != mouse.right_drag_start.id || p.type != SET_TEXT)
             {
-            jump_to_begin_or_end = false;
             x = save_x;
             y = save_y;
             while (y < (state.h / font_height))
               {
-              p = get_ex(++y, x);
+              p = get_ex(++y, save_x);
               if (p.id == mouse.right_drag_start.id && p.type == SET_TEXT)
                 break;
               }
             }
+          x = event.motion.x / font_width;
+          p = get_ex(y, x);
+          while (x > save_x && p.id < 0)
+            {
+            p = get_ex(y, --x);
+            }
+
           if (p.id == mouse.right_drag_start.id && p.type == SET_TEXT)
             {
-            if (jump_to_begin_or_end)
-              {
-              if (mouse.right_drag_start.pos < p.pos)
-                p.pos = get_line_end(state.file_state.files[p.id], p.pos);
-              else
-                p.pos = get_line_begin(state.file_state.files[p.id], p.pos);
-              }
             mouse.right_drag_end = skip_last_line_feed_character(state, p, mouse.right_drag_start.pos, mouse.right_drag_end.pos);
             }
           return state;
@@ -5228,11 +5337,74 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
               mouse.left_dragging = false;
               return state;
               }
+
+            int top, top_without_tag, bottom, left, right;
+            get_window_box(top, top_without_tag, bottom, left, right, state, mouse.left_drag_start.id);
+
+            // dragging, but mouse is outside of window, so we want the page to move up or down
+            if (top_without_tag >= 0 && y < top_without_tag)
+              {
+              state = move_page_up_without_cursor(state, 1);
+              int64_t p1, p2;
+              get_window_first_last_pos(p1, p2, state, mouse.left_drag_start.id);
+              //state.file_state.files[mouse.left_drag_start.id].dot.r.p1 = p1;              
+              mouse.left_drag_end.pos = p1;
+              mouse.left_drag_end.id = mouse.left_drag_start.id;
+              mouse.left_drag_end.type = SET_TEXT;
+              p1 = mouse.left_drag_start.pos;
+              p2 = mouse.left_drag_end.pos;
+              if (p1 > p2)
+                {
+                --p1;  // toggles pivot point of selection
+                if (!keyb_data.selecting)
+                  keyb_data.last_selection_was_upward = true;
+                std::swap(p1, p2);
+                }
+              else if (!keyb_data.selecting)
+                keyb_data.last_selection_was_upward = false;
+              state.file_state.files[mouse.left_drag_start.id].dot.r.p1 = p1;
+              state.file_state.files[mouse.left_drag_start.id].dot.r.p2 = p2 < state.file_state.files[mouse.left_drag_start.id].content.size() ? p2 + 1 : state.file_state.files[mouse.left_drag_start.id].content.size();
+              //if (event.motion.x % 2)
+              //  SDL_WarpMouseInWindow(pdc_window, event.motion.x - 1, event.motion.y);
+              //else
+              //  SDL_WarpMouseInWindow(pdc_window, event.motion.x + 1, event.motion.y);
+              return state;
+              }
+            if (bottom >= 0 && y > bottom)
+              {
+              state = move_page_down_without_cursor(state, 1);
+              int64_t p1, p2;
+              get_window_first_last_pos(p1, p2, state, mouse.left_drag_start.id);
+              //state.file_state.files[mouse.left_drag_start.id].dot.r.p2 = p2;
+              mouse.left_drag_end.pos = p2;
+              mouse.left_drag_end.id = mouse.left_drag_start.id;
+              mouse.left_drag_end.type = SET_TEXT;
+              p1 = mouse.left_drag_start.pos;
+              p2 = mouse.left_drag_end.pos;
+              if (p1 > p2)
+                {
+                --p1;  // toggles pivot point of selection
+                if (!keyb_data.selecting)
+                  keyb_data.last_selection_was_upward = true;
+                std::swap(p1, p2);
+                }
+              else if (!keyb_data.selecting)
+                keyb_data.last_selection_was_upward = false;
+              state.file_state.files[mouse.left_drag_start.id].dot.r.p1 = p1;
+              state.file_state.files[mouse.left_drag_start.id].dot.r.p2 = p2 < state.file_state.files[mouse.left_drag_start.id].content.size() ? p2 + 1 : state.file_state.files[mouse.left_drag_start.id].content.size();
+              //if (event.motion.x % 2)
+              //  SDL_WarpMouseInWindow(pdc_window, event.motion.x - 1, event.motion.y);
+              //else
+              //  SDL_WarpMouseInWindow(pdc_window, event.motion.x + 1, event.motion.y);
+              
+              return state;
+              }
+
+
             // we're not inside or window. try to find the next best guess.
             x = event.motion.x / font_width;
             y = event.motion.y / font_height;
             p = get_ex(y, x);
-            bool jump_to_begin_or_end = false;
             int save_x = x;
             int save_y = y;
             if (p.id != mouse.left_drag_start.id || p.type != SET_TEXT)
@@ -5260,7 +5432,6 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
               save_x = state.windows[state.file_id_to_window_id[mouse.left_drag_start.id]].outer_x + OFFSET_FROM_SCROLLBAR;
             if (p.id != mouse.left_drag_start.id || p.type != SET_TEXT)
               {
-              jump_to_begin_or_end = false;
               x = save_x;
               y = save_y;
               while (y > 0)
@@ -5272,7 +5443,6 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
               }
             if (p.id != mouse.left_drag_start.id || p.type != SET_TEXT)
               {
-              jump_to_begin_or_end = false;
               x = save_x;
               y = save_y;
               while (y < (state.h / font_height))
@@ -5284,13 +5454,6 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
               }
             if (p.id == mouse.left_drag_start.id && p.type == SET_TEXT)
               {
-              if (jump_to_begin_or_end)
-                {
-                if (mouse.left_drag_start.pos < p.pos)
-                  p.pos = get_line_end(state.file_state.files[p.id], p.pos);
-                else
-                  p.pos = get_line_begin(state.file_state.files[p.id], p.pos);
-                }
               mouse.left_drag_end = skip_last_line_feed_character(state, p, mouse.left_drag_start.pos, mouse.left_drag_end.pos);
               int64_t p1 = mouse.left_drag_start.pos;
               int64_t p2 = mouse.left_drag_end.pos;
@@ -5386,7 +5549,7 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
             if (p.id >= 0 && p.type == SET_TEXT)
               {
               return select_word(state, p.id, p.pos);
-              }            
+              }
             }
           mouse.left_button_down = true;
           int x = event.button.x / font_width;
