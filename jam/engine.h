@@ -18,6 +18,7 @@ struct app_state
   grid g;
   jamlib::app_state file_state;  
   jamlib::buffer snarf_buffer;
+  jamlib::buffer find_buffer;
   };
 
 struct engine

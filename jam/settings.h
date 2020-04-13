@@ -23,6 +23,8 @@ struct settings
   bool use_spaces_for_tab;
   int tab_space;
 
+  bool show_all_characters;
+
   std::string font;
   int font_size;
   };

@@ -1969,7 +1969,13 @@ app_state move_window_to_top(app_state state, uint64_t c, int64_t ci)
   for (int i = ci - 1; i >= 0; --i)
     column.items[i + 1] = column.items[i];
   column.items[0] = col_item;  
-  return *optimize_column(state, state.windows[state.window_pairs[col_item.window_pair_id].window_id].file_id);
+  column.items[0].top_layer = 0.0;
+  column.items[0].bottom_layer = column.items[1].top_layer;
+  for (int i = 1; i < column.items.size()-1; ++i)
+    column.items[i].bottom_layer = column.items[i + 1].top_layer;
+  column.items.back().bottom_layer = 1.0;
+  return resize(state);
+  //return *optimize_column(state, state.windows[state.window_pairs[col_item.window_pair_id].window_id].file_id);
   }
 
 app_state move_window_up_down(app_state state, uint64_t c, int64_t ci, int x, int y)
@@ -2016,7 +2022,7 @@ app_state move_window_up_down(app_state state, uint64_t c, int64_t ci, int x, in
       other_col_item.bottom_layer = last_top_layer;
       if (other_col_item.top_layer >= other_col_item.bottom_layer)
         {
-        other_col_item.top_layer = ((int)(other_col_item.bottom_layer*irows) - 1) / double(irows);
+        other_col_item.top_layer = ((int)std::round(other_col_item.bottom_layer*irows) - 1) / double(irows);
         }
       last_top_layer = other_col_item.top_layer;
       }
@@ -2038,6 +2044,37 @@ app_state move_window_up_down(app_state state, uint64_t c, int64_t ci, int x, in
     }
   else
     {
+    //int minimum_size_for_lower_items = column.items.size() - ci;
+    int minimum_size_for_lower_items = 0;
+    for (int64_t other = (int64_t)ci; other < column.items.size(); ++other)
+      {
+      minimum_size_for_lower_items += get_minimum_number_of_rows(column.items[other], right - left, state);
+      }
+    if (irows - minimum_size_for_lower_items < y)
+      y = irows - minimum_size_for_lower_items ;
+   
+    col_item.top_layer = (y) / double(irows);
+    if (col_item.bottom_layer <= col_item.top_layer)
+      col_item.bottom_layer = ((int)std::round(col_item.top_layer*irows) + get_minimum_number_of_rows(col_item, right - left, state)) / (double)(irows);
+    if (ci > 0)
+      {
+      column.items[ci - 1].bottom_layer = col_item.top_layer;
+      }
+    else
+      {
+      invalidate_range(left, y_offset, right - left, bottom - top);
+      }
+
+    double last_bottom_layer = col_item.bottom_layer;    
+    for (int64_t other = (int64_t)ci + 1; other < column.items.size(); ++other)
+      {
+      auto& other_col_item = column.items[other];
+      other_col_item.top_layer = last_bottom_layer;
+      if (other_col_item.bottom_layer <= other_col_item.top_layer)
+        other_col_item.bottom_layer = ((int)std::round(other_col_item.top_layer*irows) + +get_minimum_number_of_rows(other_col_item, right - left, state)) / (double)(irows);
+      last_bottom_layer = other_col_item.bottom_layer;
+      }
+    /*
     int minimum_nr_rows = get_minimum_number_of_rows(col_item, right - left, state);
     col_item.top_layer = ((int)std::round(col_item.bottom_layer*irows) - minimum_nr_rows) / double(irows);
     if (ci > 0)
@@ -2046,6 +2083,7 @@ app_state move_window_up_down(app_state state, uint64_t c, int64_t ci, int x, in
       {
       invalidate_range(left, y_offset, right - left, bottom - top);
       }
+    */
     }
   return resize(state);
   }
@@ -2357,6 +2395,8 @@ std::optional<app_state> optimize_column(app_state state, int64_t id)
           int top = (int)std::round(c.items[j].top_layer*irows);
           int bottom = (int)std::round(c.items[j].bottom_layer*irows);
           int current_rows = bottom - top;
+          if (current_rows == 0)
+            current_rows = 1;
           nr_of_rows_necessary.push_back(compute_rows_necessary(state, right - left, irows, c.items[j].window_pair_id));
           if (nr_of_rows_necessary.back() > current_rows)
             nr_of_rows_necessary.back() = current_rows;
@@ -3142,6 +3182,11 @@ std::optional<app_state> ascii_command(app_state state, int64_t id, const std::s
   return state;
   }
 
+std::optional<app_state> allchars_command(app_state state, int64_t, const std::string&)
+  {
+  gp_settings->show_all_characters = !gp_settings->show_all_characters;
+  return state;
+  }
 
 std::optional<app_state> dejavu_command(app_state state, int64_t, const std::string&)
   {
@@ -3471,6 +3516,7 @@ std::optional<app_state> snarf_command(app_state state, int64_t id, const std::s
 
 const auto executable_commands = std::map<std::string, std::function<std::optional<app_state>(app_state, int64_t, const std::string&)>>
   {
+      {"Allchars", allchars_command},
       {"Cut", cut_command},
       {"Darktheme", darktheme_command},
       {"Del", del_window},
@@ -3949,6 +3995,33 @@ std::optional<app_state> load_folder(std::string foldername, app_state state, in
     }
   }
 
+app_state find_text_instance_in_active_file(app_state state, const std::string& cmd)
+  {
+  std::stringstream find_str;
+  bool fullsearch = false;
+  if (state.file_state.files[state.file_state.active_file].dot.r.p1 == (state.file_state.files[state.file_state.active_file].content.size()))
+    fullsearch = true;
+  if (fullsearch)
+    find_str << "0+/(" << resolve_jamlib_escape_characters(resolve_regex_escape_characters(cmd)) << ")/";
+  else
+    find_str << ".+/(" << resolve_jamlib_escape_characters(resolve_regex_escape_characters(cmd)) << ")/";
+  try
+    {
+    state.file_state = *jamlib::handle_command(state.file_state, find_str.str());
+    if (!fullsearch && state.file_state.files[state.file_state.active_file].dot.r.p1 == (state.file_state.files[state.file_state.active_file].content.size()))
+      {
+      std::stringstream find_str_2;
+      find_str_2 << "0+/(" << resolve_jamlib_escape_characters(resolve_regex_escape_characters(cmd)) << ")/";
+      state.file_state = *jamlib::handle_command(state.file_state, find_str_2.str());
+      }
+    }
+  catch (std::runtime_error e)
+    {
+    return add_error_text(state, e.what());
+    }
+  return update_window_to_dot(state);
+  }
+
 std::optional<app_state> load(app_state state, int64_t p1, int64_t p2, int64_t id)
   {
   if (id < 0 || p1 < 0 || p2 < 0)
@@ -3994,6 +4067,8 @@ std::optional<app_state> load(app_state state, int64_t p1, int64_t p2, int64_t i
     return load_folder(cmd, state, id);
 
   state.file_state.active_file = get_active_file_id(state, id);
+  return find_text_instance_in_active_file(state, cmd);
+  /*
   std::stringstream find_str;
   bool fullsearch = false;
   if (state.file_state.files[state.file_state.active_file].dot.r.p1 == (state.file_state.files[state.file_state.active_file].content.size()))
@@ -4017,6 +4092,7 @@ std::optional<app_state> load(app_state state, int64_t p1, int64_t p2, int64_t i
     return add_error_text(state, e.what());
     }
   return update_window_to_dot(state);
+  */
   }
 
 bool invalid_command_window_position(const app_state& state)
@@ -4447,6 +4523,44 @@ app_state copy_to_snarf_buffer(app_state state)
   return state;
   }
 
+app_state next_instance_of_find_buffer(app_state state)
+  {
+  std::wstring wcmd(state.find_buffer.begin(), state.find_buffer.end());
+  std::string cmd = JAM::convert_wstring_to_string(wcmd);
+  return find_text_instance_in_active_file(state, cmd);
+  /*
+  std::stringstream find_str;
+  bool fullsearch = false;
+  if (state.file_state.files[state.file_state.active_file].dot.r.p1 == (state.file_state.files[state.file_state.active_file].content.size()))
+    fullsearch = true;
+  if (fullsearch)
+    find_str << "0+/(" << resolve_jamlib_escape_characters(resolve_regex_escape_characters(cmd)) << ")/";
+  else
+    find_str << ".+/(" << resolve_jamlib_escape_characters(resolve_regex_escape_characters(cmd)) << ")/";
+  try
+    {
+    state.file_state = *jamlib::handle_command(state.file_state, find_str.str());
+    if (!fullsearch && state.file_state.files[state.file_state.active_file].dot.r.p1 == (state.file_state.files[state.file_state.active_file].content.size()))
+      {
+      std::stringstream find_str_2;
+      find_str_2 << "0+/(" << resolve_jamlib_escape_characters(resolve_regex_escape_characters(cmd)) << ")/";
+      state.file_state = *jamlib::handle_command(state.file_state, find_str_2.str());
+      }
+    }
+  catch (std::runtime_error e)
+    {
+    return add_error_text(state, e.what());
+    }
+  return update_window_to_dot(state);*/
+  }
+
+app_state copy_to_find_buffer(app_state state)
+  {
+  const auto& f = state.file_state.files[state.file_state.active_file];
+  state.find_buffer = f.content.slice(f.dot.r.p1, f.dot.r.p2);
+  return next_instance_of_find_buffer(state);
+  }
+
 void copy_to_windows_clipboard(const app_state& state)
   {
   const auto& f = state.file_state.files[state.file_state.active_file];
@@ -4822,6 +4936,18 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
           if (keyb.is_down(SDLK_LCTRL) || keyb.is_down(SDLK_RCTRL)) // save
             {
             return put_command(state, state.file_state.active_file, "");
+            }
+          break;
+          }
+          case SDLK_F3:
+          {
+          if (keyb.is_down(SDLK_LCTRL) || keyb.is_down(SDLK_RCTRL)) // copy
+            {
+            return copy_to_find_buffer(state);
+            }
+          else
+            {
+            return next_instance_of_find_buffer(state);
             }
           break;
           }

@@ -49,6 +49,8 @@ settings read_settings(const char* filename)
   s.use_spaces_for_tab = true;
   s.tab_space = 2;
 
+  s.show_all_characters = false;
+
   pref_file f(filename, pref_file::READ);
   f["win_bg_red"] >> s.win_bg_red;
   f["win_bg_green"] >> s.win_bg_green;
@@ -85,7 +87,7 @@ settings read_settings(const char* filename)
 
   f["use_spaces_for_tab"] >> s.use_spaces_for_tab;
   f["tab_space"] >> s.tab_space;
-
+  f["show_all_characters"] >> s.show_all_characters;
   return s;
   }
 
@@ -125,5 +127,7 @@ void write_settings(const settings& s, const char* filename)
 
   f << "use_spaces_for_tab" << s.use_spaces_for_tab;
   f << "tab_space" << s.tab_space;
+  f << "show_all_characters" << s.show_all_characters;
+
   f.release();
   }

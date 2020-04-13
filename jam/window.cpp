@@ -37,37 +37,60 @@ namespace
     return false;
     }
 
-  uint32_t character_width(uint32_t character, jamlib::encoding enc, const settings& sett)
+#define ALL_CHARS_FORMAT A_BOLD
+
+  bool character_invert(uint32_t character, const settings& sett)
     {
-    switch (enc)
+    if (sett.show_all_characters)
       {
-      case jamlib::ENC_ASCII:
-      case jamlib::ENC_UTF8:
-      {
-      if (character == 9)
-        return sett.tab_space;
-      return 1;
+      return (character == 9 || character == 10 || character == 13 || character == 32);
       }
-      }
-    return 1;
+    return false;
     }
 
-  uint16_t character_to_pdc_char(uint32_t character, jamlib::encoding enc)
+  uint32_t character_width(uint32_t character, jamlib::encoding enc, const settings& sett)
+    {
+    switch (character)
+      {
+      case 9: return sett.tab_space;
+      case 10: return sett.show_all_characters ? 2 : 1;
+      case 13: return sett.show_all_characters ? 2 : 1;
+      default: return 1;
+      }
+    }
+
+  uint16_t character_to_pdc_char(uint32_t character, uint32_t char_id, jamlib::encoding enc, const settings& sett)
     {
     if (character > 65535)
       return '?';
-    switch (enc)
+    switch (character)
       {
-      case jamlib::ENC_ASCII:
+      case 9: 
       {
-      return (character == 9 || character == 13) ? 32 : jamlib::ascii_to_utf16((unsigned char)character);
+      if (sett.show_all_characters)
+        {
+        switch (char_id)
+          {
+          case 0: return 84; break;
+          case 1: return 66; break;
+          default: return 32; break;
+          }
+        }
+      return 32; break;
       }
-      case jamlib::ENC_UTF8:
-      {
-      return (character == 9 || character == 13) ? 32 : (uint16_t)character;
+      case 10: {
+      if (sett.show_all_characters)
+        return char_id == 0 ? 76 : 70;
+      return 32; break;
       }
+      case 13: {
+      if (sett.show_all_characters)
+        return char_id == 0 ? 67 : 82;
+      return 32; break;
       }
-    return '?';
+      case 32: return sett.show_all_characters ? 46 : 32; break;
+      default: return enc == jamlib::ENC_UTF8 ? (uint16_t)character : jamlib::ascii_to_utf16((unsigned char)character);
+      }
     }
   }
 
@@ -1014,18 +1037,48 @@ namespace
           {
           if (col >= w.file_col && row >= w.wordwrap_row)
             {
-            add_ex(w.file_id, pos, SET_TEXT);
-            addch(' ');
-            ++col;
+            //add_ex(w.file_id, pos, SET_TEXT);
+            //addch(' ');
+            //++col;
+            bool ch_invert = character_invert('\n', sett);
+            if (ch_invert)
+              attron(ALL_CHARS_FORMAT);
+            uint32_t cwidth = character_width('\n', state.files[w.file_id].enc, sett);
+            for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
+              {
+              add_ex(w.file_id, pos, SET_TEXT);
+              addch(character_to_pdc_char('\n', cnt, state.files[w.file_id].enc, sett));
+              }
+            if (ch_invert)
+              {
+              attroff(ALL_CHARS_FORMAT);
+              attron(attribute_stack.back());
+              }
+            col += cwidth;
             }
           }
         else
           {
           if (col >= w.file_col && col < (w.cols + w.file_col) && row < w.rows)
             {
-            add_ex(w.file_id, pos, SET_TEXT);
-            addch(' ');
-            ++col;
+            //add_ex(w.file_id, pos, SET_TEXT);
+            //addch(' ');
+            //++col;
+            bool ch_invert = character_invert('\n', sett);
+            if (ch_invert)
+              attron(ALL_CHARS_FORMAT);
+            uint32_t cwidth = character_width('\n', state.files[w.file_id].enc, sett);
+            for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
+              {
+              add_ex(w.file_id, pos, SET_TEXT);
+              addch(character_to_pdc_char('\n', cnt, state.files[w.file_id].enc, sett));
+              }
+            if (ch_invert)
+              {
+              attroff(ALL_CHARS_FORMAT);
+              attron(attribute_stack.back());
+              }
+            col += cwidth;
             }
           }
         if (w.is_command_window)
@@ -1066,11 +1119,19 @@ namespace
               attron(COLOR_PAIR(comment));
             if (should_highlight)
               attron(COLOR_PAIR(highlight));
+            bool ch_invert = character_invert(character, sett);
+            if (ch_invert)
+              attron(ALL_CHARS_FORMAT);
             uint32_t cwidth = character_width(character, state.files[w.file_id].enc, sett);
             for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
               {
               add_ex(w.file_id, pos, SET_TEXT);
-              addch(character_to_pdc_char(character, state.files[w.file_id].enc));
+              addch(character_to_pdc_char(character, cnt, state.files[w.file_id].enc, sett));
+              }
+            if (ch_invert)
+              {
+              attroff(ALL_CHARS_FORMAT);
+              attron(attribute_stack.back());
               }
             if (should_highlight)
               {
@@ -1121,11 +1182,19 @@ namespace
               attron(COLOR_PAIR(comment));
             if (should_highlight)
               attron(COLOR_PAIR(highlight));
+            bool ch_invert = character_invert(character, sett);
+            if (ch_invert)
+              attron(ALL_CHARS_FORMAT);
             uint32_t cwidth = character_width(character, state.files[w.file_id].enc, sett);
             for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
               {
               add_ex(w.file_id, pos, SET_TEXT);
-              addch(character_to_pdc_char(character, state.files[w.file_id].enc));
+              addch(character_to_pdc_char(character, cnt, state.files[w.file_id].enc, sett));
+              }
+            if (ch_invert)
+              {
+              attroff(ALL_CHARS_FORMAT);
+              attron(attribute_stack.back());
               }
             if (should_highlight)
               {
