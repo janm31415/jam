@@ -4949,6 +4949,7 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
             std::swap(state.file_state.files[state.file_state.active_file].dot.r.p1, state.file_state.files[state.file_state.active_file].dot.r.p2);
           if (keyb_data.selecting)
             state = stop_selection(state);
+          mouse.left_dragging = mouse.middle_dragging = mouse.right_dragging = false;
           return text_input(state, event.text.text);
           break;
 
@@ -4967,10 +4968,10 @@ std::optional<app_state> process_input(app_state state, const settings& sett)
           case SDLK_UP: return move_up(state);
           case SDLK_PAGEUP: return move_cursor_page_up(state);
           case SDLK_PAGEDOWN: return move_cursor_page_down(state);
-          case SDLK_BACKSPACE: if (keyb_data.selecting) state = stop_selection(state); return backspace(state);
-          case SDLK_RETURN: if (keyb_data.selecting) state = stop_selection(state); return enter(state);
-          case SDLK_TAB: if (keyb_data.selecting) state = stop_selection(state); return tab(state);
-          case SDLK_DELETE: if (keyb_data.selecting) state = stop_selection(state); return delete_press(state, (keyb.is_down(SDLK_LSHIFT) || keyb.is_down(SDLK_RSHIFT)));
+          case SDLK_BACKSPACE: mouse.left_dragging = mouse.middle_dragging = mouse.right_dragging = false; if (keyb_data.selecting) state = stop_selection(state); return backspace(state);
+          case SDLK_RETURN: mouse.left_dragging = mouse.middle_dragging = mouse.right_dragging = false; if (keyb_data.selecting) state = stop_selection(state); return enter(state);
+          case SDLK_TAB: mouse.left_dragging = mouse.middle_dragging = mouse.right_dragging = false; if (keyb_data.selecting) state = stop_selection(state); return tab(state);
+          case SDLK_DELETE: mouse.left_dragging = mouse.middle_dragging = mouse.right_dragging = false; if (keyb_data.selecting) state = stop_selection(state); return delete_press(state, (keyb.is_down(SDLK_LSHIFT) || keyb.is_down(SDLK_RSHIFT)));
           case SDLK_LSHIFT:
           case SDLK_RSHIFT:
           {

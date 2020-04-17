@@ -17,6 +17,13 @@ namespace
     return cd;
     }
 
+  comment_data make_comment_data_for_assembly()
+    {
+    comment_data cd;
+    cd.single_line = ";";
+    return cd;
+    }
+
   comment_data make_comment_data_for_scheme()
     {
     comment_data cd;
@@ -33,11 +40,20 @@ namespace
     return cd;
     }
 
+  comment_data make_comment_data_for_xml()
+    {
+    comment_data cd;
+    cd.multiline_begin = "<!--";
+    cd.multiline_end = "-->";
+    return cd;
+    }
+
   std::map<std::string, comment_data> build_map_hardcoded()
     {
     std::map<std::string, comment_data> m;
 
     m["c"] = make_comment_data_for_cpp();
+    m["cc"] = make_comment_data_for_cpp();
     m["cpp"] = make_comment_data_for_cpp();
     m["h"] = make_comment_data_for_cpp();
     m["hpp"] = make_comment_data_for_cpp();
@@ -48,6 +64,12 @@ namespace
     m["cmake"] = make_comment_data_for_python_and_cmake();
 
     m["cmakelists.txt"] = make_comment_data_for_python_and_cmake();
+
+    m["xml"] = make_comment_data_for_xml();
+    m["html"] = make_comment_data_for_xml();
+
+    m["s"] = make_comment_data_for_assembly();
+    m["asm"] = make_comment_data_for_assembly();
     return m;
     }
 

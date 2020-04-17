@@ -7,6 +7,10 @@
           "multiline_end": "*/",
           "singleline": "//"
        },
+  "cc": {"multiline_begin": "/*",
+          "multiline_end": "*/",
+          "singleline": "//"
+       },       
   "h": {"multiline_begin": "/*",
         "multiline_end": "*/",
         "singleline": "//"
@@ -21,6 +25,15 @@
        },
   "py": { "singleline": "#" },
   "cmake": { "singleline": "#" },
-  "cmakelists.txt": { "singleline": "#" }
-
+  "cmakelists.txt": { "singleline": "#" },
+  "xml": {"multiline_begin": "<!--",
+          "multiline_end": "-->"}
+  "html": {"multiline_begin": "<!--",
+           "multiline_end": "-->"},
+  "s": {
+          "singleline": ";"
+       },
+  "asm": {
+          "singleline": ";"
+       }
 }

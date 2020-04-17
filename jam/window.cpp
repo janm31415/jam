@@ -351,7 +351,7 @@ namespace
         continue;
         }
 
-      if (!begin)
+      if (!begin || cd.single_line.empty())
         return candidate;
       int64_t linebegin = candidate;
       auto it = state.files[state.active_file].content.begin() + linebegin;
@@ -473,10 +473,10 @@ namespace
         return cr;
         }
       cr.low.push_back(p1);
-      cr.high.push_back(first_comment_stop + 1);
-      if (first_comment_stop + 2 >= p2)
+      cr.high.push_back(first_comment_stop + cd.multiline_end.length()-1);
+      if (first_comment_stop + cd.multiline_end.length() >= p2)
         return cr;
-      current_pos = first_comment_stop + 2;
+      current_pos = first_comment_stop + cd.multiline_end.length();
       }
 
     while (current_pos < p2)
@@ -496,10 +496,10 @@ namespace
         return cr;
         }
       cr.low.push_back(comment_start);
-      cr.high.push_back(comment_stop + 1);
-      if (comment_stop + 2 >= p2)
+      cr.high.push_back(comment_stop + cd.multiline_end.length() - 1);
+      if (comment_stop + cd.multiline_end.length() >= p2)
         return cr;
-      current_pos = comment_stop + 2;
+      current_pos = comment_stop + cd.multiline_end.length();
       }
     return cr;
     }
@@ -507,6 +507,8 @@ namespace
   comment_ranges find_cpp_singleline_comments(jamlib::app_state state, int64_t p1, int64_t p2, const comment_data& cd)
     {
     comment_ranges cr;
+    if (cd.single_line.empty())
+      return cr;
     int64_t current_pos = p1;
     while (current_pos < p2)
       {
