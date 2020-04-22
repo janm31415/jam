@@ -43,6 +43,8 @@ struct window
 
 //void draw(window w, jamlib::app_state state, const settings& sett);
 
+uint32_t character_width(uint32_t character, int64_t col, jamlib::encoding enc, const settings& sett);
+
 jamlib::range get_window_range(window w, jamlib::app_state state);
 
 struct window_pair

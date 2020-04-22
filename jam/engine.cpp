@@ -4863,7 +4863,7 @@ void get_window_first_last_pos(int64_t& p1, int64_t& p2, const app_state& state,
           if (p1 == -1)
             p1 = pos;
           //draw linefeed
-          ++col;
+          col += character_width(*it, col, f.enc, *gp_settings);
           }
         }
       else
@@ -4873,7 +4873,7 @@ void get_window_first_last_pos(int64_t& p1, int64_t& p2, const app_state& state,
           if (p1 == -1)
             p1 = pos;
           //draw linefeed
-          ++col;
+          col += character_width(*it, col, f.enc, *gp_settings);
           }
         }
       col = 0;
@@ -4888,10 +4888,10 @@ void get_window_first_last_pos(int64_t& p1, int64_t& p2, const app_state& state,
           if (p1 == -1)
             p1 = pos;
           //draw char
-          ++col;
+          col += character_width(*it, col, f.enc, *gp_settings);
           }
         else
-          ++col;
+          col += character_width(*it, col, f.enc, *gp_settings);
         if (col >= w.cols - 1)
           {
           col = 0;
@@ -4905,10 +4905,10 @@ void get_window_first_last_pos(int64_t& p1, int64_t& p2, const app_state& state,
           if (p1 == -1)
             p1 = pos;
           //draw char
-          ++col;
+          col += character_width(*it, col, f.enc, *gp_settings);
           }
         else
-          ++col;
+          col += character_width(*it, col, f.enc, *gp_settings);
         }
       }
 

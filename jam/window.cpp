@@ -22,6 +22,17 @@ extern "C"
   {
 #include <sdl2/pdcsdl.h>
   }
+  
+uint32_t character_width(uint32_t character, int64_t col, jamlib::encoding enc, const settings& sett)
+    {
+    switch (character)
+      {
+      case 9: return sett.tab_space - (col % sett.tab_space);
+      case 10: return sett.show_all_characters ? 2 : 1;
+      case 13: return sett.show_all_characters ? 2 : 1;
+      default: return 1;
+      }
+    }  
 
 namespace
   {
@@ -46,18 +57,7 @@ namespace
       return (character == 9 || character == 10 || character == 13 || character == 32);
       }
     return false;
-    }
-
-  uint32_t character_width(uint32_t character, int64_t col, jamlib::encoding enc, const settings& sett)
-    {
-    switch (character)
-      {
-      case 9: return sett.tab_space - (col % sett.tab_space);
-      case 10: return sett.show_all_characters ? 2 : 1;
-      case 13: return sett.show_all_characters ? 2 : 1;
-      default: return 1;
-      }
-    }
+    }  
 
   uint16_t character_to_pdc_char(uint32_t character, uint32_t char_id, jamlib::encoding enc, const settings& sett)
     {
