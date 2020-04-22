@@ -329,7 +329,8 @@ app_state make_window_piped(app_state state, int64_t file_id, std::string win_co
 bool has_valid_file_pos(const window& w, const app_state& state);
 app_state update_command_text(app_state state, uint32_t command_id);
 std::optional<app_state> optimize_column(app_state state, int64_t id);
-
+std::pair<int64_t, int64_t> get_word_from_position(const app_state& state, int64_t file_id, int64_t pos);
+void get_window_first_last_pos(int64_t& p1, int64_t& p2, const app_state& state, int64_t file_id);
 
 app_state set_fileids(app_state state)
   {
@@ -2988,6 +2989,21 @@ app_state update_window_file_pos(app_state state)
   return state;
   }
 
+app_state ensure_selection_is_visible(app_state state, int64_t file_id)
+  {
+  auto& f = state.file_state.files[file_id];
+  auto& w = state.windows[state.file_id_to_window_id[file_id]];
+  int64_t p1, p2;
+  get_window_first_last_pos(p1, p2, state, file_id);
+
+  if (f.dot.r.p1 < p1)
+    w.file_pos = f.dot.r.p1;
+  if (f.dot.r.p1 > p2)
+    w.file_pos = f.dot.r.p1;
+  w.file_pos = get_line_begin(f, w.file_pos);
+  assert(has_valid_file_pos(state));
+  return state;
+  }
 
 bool should_update_corresponding_command_window(const app_state& state)
   {
@@ -3063,6 +3079,14 @@ jamlib::buffer get_folder_list(const std::string& foldername)
   folder_content.push_back('\n');
 
   auto items = JAM::get_subdirectories_from_directory(foldername, false);
+  //std::sort(items.begin(), items.end());
+
+  //sort vector of strings case insensitive
+  std::sort(items.begin(), items.end(), [](const std::string& lhs, const std::string& rhs) 
+    {
+    const auto result = std::mismatch(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), [](const unsigned char lhs, const unsigned char rhs) {return tolower(lhs) == tolower(rhs); });
+    return result.second != rhs.cend() && (result.first == lhs.cend() || tolower(*result.first) < tolower(*result.second));
+    });
 
   for (auto& item : items)
     {
@@ -3075,6 +3099,14 @@ jamlib::buffer get_folder_list(const std::string& foldername)
     }
 
   items = JAM::get_files_from_directory(foldername, false);
+  //std::sort(items.begin(), items.end());
+  
+  //sort vector of strings case insensitive
+  std::sort(items.begin(), items.end(), [](const std::string& lhs, const std::string& rhs)
+    {
+    const auto result = std::mismatch(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), [](const unsigned char lhs, const unsigned char rhs) {return tolower(lhs) == tolower(rhs); });
+    return result.second != rhs.cend() && (result.first == lhs.cend() || tolower(*result.first) < tolower(*result.second));
+    });
 
   for (auto& item : items)
     {
@@ -3250,7 +3282,7 @@ std::optional<app_state> redo_command(app_state state, int64_t id, const std::st
   state.file_state = *jamlib::handle_command(state.file_state, "R");
   if (should_update_corresponding_command_window(state))
     state = update_corresponding_command_window(state);
-  return update_window_file_pos(state);
+  return ensure_selection_is_visible(state, state.file_state.active_file);
   }
 
 std::optional<app_state> undo_command(app_state state, int64_t id, const std::string&)
@@ -3259,7 +3291,7 @@ std::optional<app_state> undo_command(app_state state, int64_t id, const std::st
   state.file_state = *jamlib::handle_command(state.file_state, "u");
   if (should_update_corresponding_command_window(state))
     state = update_corresponding_command_window(state);
-  return update_window_file_pos(state);
+  return ensure_selection_is_visible(state, state.file_state.active_file);
   }
 
 std::optional<app_state> local_redo_command(app_state state, int64_t id, const std::string&)
@@ -3268,7 +3300,7 @@ std::optional<app_state> local_redo_command(app_state state, int64_t id, const s
   state.file_state = *jamlib::handle_command(state.file_state, "R");
   if (should_update_corresponding_command_window(state))
     state = update_corresponding_command_window(state);
-  return update_window_file_pos(state);
+  return ensure_selection_is_visible(state, state.file_state.active_file);
   }
 
 std::optional<app_state> local_undo_command(app_state state, int64_t id, const std::string&)
@@ -3277,7 +3309,7 @@ std::optional<app_state> local_undo_command(app_state state, int64_t id, const s
   state.file_state = *jamlib::handle_command(state.file_state, "u");
   if (should_update_corresponding_command_window(state))
     state = update_corresponding_command_window(state);
-  return update_window_file_pos(state);
+  return ensure_selection_is_visible(state, state.file_state.active_file);
   }
 
 std::optional<app_state> dostheme_command(app_state state, int64_t id, const std::string&)
@@ -3932,7 +3964,7 @@ std::optional<app_state> load_folder(std::string foldername, app_state state, in
     tag.content = t.persistent();
     tag.dot.r.p1 = tag.dot.r.p2 = tag.content.size();
     f.content = get_folder_list(foldername);
-    f.dot.r.p1 = f.dot.r.p2 = 0;
+    f.dot.r.p1 = f.dot.r.p2 = f.content.size();
 
     w.file_pos = 0;
 
@@ -3966,8 +3998,8 @@ std::optional<app_state> load_folder(std::string foldername, app_state state, in
 
 
     state.file_state.files.back().modification_mask = 0;
-    state.file_state.files.back().dot.r.p1 = 0;
-    state.file_state.files.back().dot.r.p2 = 0;
+    state.file_state.files.back().dot.r.p1 = state.file_state.files.back().content.size();
+    state.file_state.files.back().dot.r.p2 = state.file_state.files.back().content.size();
     state.file_state.files.back().filename = foldername;
     state.file_id_to_window_id.push_back((uint32_t)state.windows.size() + 1);
 
@@ -4065,6 +4097,18 @@ std::optional<app_state> load(app_state state, int64_t p1, int64_t p2, int64_t i
 
   if (JAM::is_directory(cmd))
     return load_folder(cmd, state, id);
+
+
+  // we right-clicked on a string in order to find the next instance. If p1==p2, we first need to determine which word the user wants to find.
+  if (p1 == p2) 
+    {
+    auto result = get_word_from_position(state, id, p1);
+    if (result.first != -1 && result.second != -1)
+      {
+      std::wstring wcmd(state.file_state.files[id].content.begin() + result.first, state.file_state.files[id].content.begin() + result.second);
+      cmd = jamlib::convert_wstring_to_string(wcmd, state.file_state.files[id].enc);
+      }
+    }
 
   state.file_state.active_file = get_active_file_id(state, id);
   return find_text_instance_in_active_file(state, cmd);
@@ -4661,14 +4705,15 @@ bool valid_char_for_word_selection(wchar_t ch)
   return valid;
   }
 
-app_state select_word(app_state state, int64_t id, int64_t pos)
+std::pair<int64_t, int64_t> get_word_from_position(const app_state& state, int64_t file_id, int64_t pos)
   {
-  if (pos < 0 || id < 0 || state.file_state.files[id].content.empty())
-    return state;
-  const auto it0 = state.file_state.files[id].content.begin();
-  auto it = state.file_state.files[id].content.begin() + pos;
+  std::pair<int64_t, int64_t> result(-1, -1);
+  if (pos < 0 || file_id < 0 || state.file_state.files[file_id].content.empty())
+    return result;
+  const auto it0 = state.file_state.files[file_id].content.begin();
+  auto it = state.file_state.files[file_id].content.begin() + pos;
   auto it2 = it;
-  auto it_end = state.file_state.files[id].content.end();
+  auto it_end = state.file_state.files[file_id].content.end();
   if (it == it_end)
     --it;
   while (it > it0)
@@ -4686,21 +4731,31 @@ app_state select_word(app_state state, int64_t id, int64_t pos)
     ++it2;
     }
   if (it2 <= it)
-    return state;
+    return result;
   int64_t p1 = (int64_t)std::distance(it0, it);
   int64_t p2 = (int64_t)std::distance(it0, it2);
 
   // now check special cases
   // first special: case var-> : will select var- because of scheme rule, but here we're c++ and we don't want the -
 
-  if (p2 < state.file_state.files[id].content.size())
+  if (p2 < state.file_state.files[file_id].content.size())
     {
-    if (state.file_state.files[id].content[p2] == '>' && state.file_state.files[id].content[p2 - 1] == '-')
+    if (state.file_state.files[file_id].content[p2] == '>' && state.file_state.files[file_id].content[p2 - 1] == '-')
       --p2;
     }
 
-  state.file_state.files[id].dot.r.p1 = p1;
-  state.file_state.files[id].dot.r.p2 = p2;
+  result.first = p1;
+  result.second = p2;
+  return result;
+  }
+
+app_state select_word(app_state state, int64_t id, int64_t pos)
+  {
+  auto result = get_word_from_position(state, id, pos);
+  if (result.first == -1 || result.second == -1)
+    return state;
+  state.file_state.files[id].dot.r.p1 = result.first;
+  state.file_state.files[id].dot.r.p2 = result.second;
   return state;
   }
 
