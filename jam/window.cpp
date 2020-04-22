@@ -48,11 +48,11 @@ namespace
     return false;
     }
 
-  uint32_t character_width(uint32_t character, jamlib::encoding enc, const settings& sett)
+  uint32_t character_width(uint32_t character, int64_t col, jamlib::encoding enc, const settings& sett)
     {
     switch (character)
       {
-      case 9: return sett.tab_space;
+      case 9: return sett.tab_space - (col % sett.tab_space);
       case 10: return sett.show_all_characters ? 2 : 1;
       case 13: return sett.show_all_characters ? 2 : 1;
       default: return 1;
@@ -1045,7 +1045,7 @@ namespace
             bool ch_invert = character_invert('\n', sett);
             if (ch_invert)
               attron(ALL_CHARS_FORMAT);
-            uint32_t cwidth = character_width('\n', state.files[w.file_id].enc, sett);
+            uint32_t cwidth = character_width('\n', col, state.files[w.file_id].enc, sett);
             for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
               {
               add_ex(w.file_id, pos, SET_TEXT);
@@ -1069,7 +1069,7 @@ namespace
             bool ch_invert = character_invert('\n', sett);
             if (ch_invert)
               attron(ALL_CHARS_FORMAT);
-            uint32_t cwidth = character_width('\n', state.files[w.file_id].enc, sett);
+            uint32_t cwidth = character_width('\n', col, state.files[w.file_id].enc, sett);
             for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
               {
               add_ex(w.file_id, pos, SET_TEXT);
@@ -1124,7 +1124,7 @@ namespace
             bool ch_invert = character_invert(character, sett);
             if (ch_invert)
               attron(ALL_CHARS_FORMAT);
-            uint32_t cwidth = character_width(character, state.files[w.file_id].enc, sett);
+            uint32_t cwidth = character_width(character, col, state.files[w.file_id].enc, sett);
             for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
               {
               add_ex(w.file_id, pos, SET_TEXT);
@@ -1187,7 +1187,7 @@ namespace
             bool ch_invert = character_invert(character, sett);
             if (ch_invert)
               attron(ALL_CHARS_FORMAT);
-            uint32_t cwidth = character_width(character, state.files[w.file_id].enc, sett);
+            uint32_t cwidth = character_width(character, col, state.files[w.file_id].enc, sett);
             for (uint32_t cnt = 0; cnt < cwidth; ++cnt)
               {
               add_ex(w.file_id, pos, SET_TEXT);

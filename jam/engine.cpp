@@ -3238,10 +3238,24 @@ std::optional<app_state> noto_command(app_state state, int64_t, const std::strin
   return resize_font(state, gp_settings->font_size);
   }
 
-std::optional<app_state> tab_command(app_state state, int64_t, const std::string&)
+std::optional<app_state> tab_command(app_state state, int64_t, const std::string& cmd)
   {
-  gp_settings->use_spaces_for_tab = !gp_settings->use_spaces_for_tab;
-  return state;
+  std::string tab_command = cleanup(cmd.substr(3));
+  if (tab_command.empty())
+    {
+    gp_settings->use_spaces_for_tab = !gp_settings->use_spaces_for_tab;
+    return state;
+    }
+  else
+    {
+    std::stringstream ss;
+    ss << tab_command;
+    int tab_size;
+    ss >> tab_size;
+    if (tab_size > 1 && tab_size < 100)
+	    gp_settings->tab_space = tab_size;
+    return state;
+    }
   }
 
 std::optional<app_state> consola_command(app_state state, int64_t, const std::string&)
@@ -3763,6 +3777,8 @@ std::optional<app_state> execute(app_state state, int64_t p1, int64_t p2, int64_
     return edit_command(state, id, cmd);
   if (cmd.substr(0, 3) == "Win")
     return win_command(state, id, cmd);
+  if (cmd.substr(0, 3) == "Tab")
+    return tab_command(state, id, cmd);
 
   char pipe_cmd = cmd_id[0];
   if (pipe_cmd == '!' || pipe_cmd == '<' || pipe_cmd == '>' || pipe_cmd == '|')
