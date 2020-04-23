@@ -4318,8 +4318,9 @@ app_state tab(app_state state)
   command.push_back('/');
 
   if (gp_settings->use_spaces_for_tab)
-    {
-    dot_jump_steps = gp_settings->tab_space;
+    {    
+    int64_t col = d.r.p1 - get_line_begin(f, d.r.p1);
+    dot_jump_steps = gp_settings->tab_space - (col % gp_settings->tab_space);
     for (int i = 0; i < dot_jump_steps; ++i)
       command.push_back(' ');
     }
