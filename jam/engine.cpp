@@ -4214,6 +4214,7 @@ app_state delete_press(app_state state, bool shift)
     return state;
   if (shift)
     state = copy_to_snarf_buffer(state);
+
   std::string command;
   command.push_back('d');
   auto& f = state.file_state.files[state.file_state.active_file];
