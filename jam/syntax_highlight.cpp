@@ -48,6 +48,15 @@ namespace
     return cd;
     }
 
+  comment_data make_comment_data_for_forth()
+    {
+    comment_data cd;
+    cd.multiline_begin = "(";
+    cd.multiline_end = ")";
+    cd.single_line = "\\\\";
+    return cd;
+    }
+
   std::map<std::string, comment_data> build_map_hardcoded()
     {
     std::map<std::string, comment_data> m;
@@ -70,6 +79,8 @@ namespace
 
     m["s"] = make_comment_data_for_assembly();
     m["asm"] = make_comment_data_for_assembly();
+
+    m["4th"] = make_comment_data_for_forth();
     return m;
     }
 

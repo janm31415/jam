@@ -273,8 +273,8 @@ namespace
         continue;
         }
 
-      if (!begin)
-        return candidate;
+      //if (!begin)
+      //  return candidate;
       int64_t linebegin = candidate;
       auto it = state.files[state.active_file].content.begin() + linebegin;
       while (linebegin && (*it != '\n'))
@@ -351,7 +351,9 @@ namespace
         continue;
         }
 
-      if (!begin || cd.single_line.empty())
+      //if (!begin || cd.single_line.empty())
+      //  return candidate;
+      if (cd.single_line.empty())
         return candidate;
       int64_t linebegin = candidate;
       auto it = state.files[state.active_file].content.begin() + linebegin;
@@ -517,19 +519,20 @@ namespace
 
       std::stringstream ss;
       ss << "s/" << resolve_regex_escape_characters(cd.single_line) << "/" << resolve_jamlib_escape_characters(cd.single_line) << "/";
-      state = *jamlib::handle_command(state, ss.str()); // find single line comment and substitute by single line comment
+      
+      jamlib::app_state new_state = *jamlib::handle_command(state, ss.str()); // find single line comment and substitute by single line comment
 
-      if (state.files[state.active_file].dot.r.p2 - state.files[state.active_file].dot.r.p1 == cd.single_line.size())
+      if (new_state.files[new_state.active_file].dot.r.p2 - new_state.files[new_state.active_file].dot.r.p1 == cd.single_line.size())
         {
-        int64_t t = state.files[state.active_file].dot.r.p1;
+        int64_t t = new_state.files[new_state.active_file].dot.r.p1;
         for (int j = 0; j < cd.single_line.size(); ++j)
-          if (state.files[state.active_file].content[t + j] != cd.single_line[j])
+          if (new_state.files[new_state.active_file].content[t + j] != cd.single_line[j])
             return cr;
 
-        bool is_quoted = in_quotes(state.files[state.active_file], state.files[state.active_file].dot.r.p1, state.files[state.active_file].dot.r.p2);
+        bool is_quoted = in_quotes(new_state.files[state.active_file], new_state.files[state.active_file].dot.r.p1, new_state.files[state.active_file].dot.r.p2);
         if (is_quoted)
           {
-          current_pos = state.files[state.active_file].dot.r.p2;
+          current_pos = new_state.files[new_state.active_file].dot.r.p2;
           continue;
           }
 

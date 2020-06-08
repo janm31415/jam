@@ -35,5 +35,10 @@
        },
   "asm": {
           "singleline": ";"
-       }
+       },
+  "4th": {
+          "singleline": "\\\\",
+          "multiline_begin": "(",
+          "multiline_end": ")"
+         }
 }
