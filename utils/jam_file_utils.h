@@ -9,7 +9,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#if defined(unix) || defined(__unix) || defined(__unix__) || defined(UNIX)
 #include <linux/limits.h>
+#endif
 #endif
 
 #include <string>

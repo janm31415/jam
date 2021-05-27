@@ -303,8 +303,10 @@ app_state resize_font(app_state state, int font_size)
     {
 #ifdef _WIN32
     pdc_ttffont = TTF_OpenFont("C:/Windows/Fonts/consola.ttf", pdc_font_size);
-#else
+#elif defined(unix) || defined(__unix) || defined(__unix__) || defined(UNIX)
     pdc_ttffont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", pdc_font_size);
+#else
+    pdc_ttffont = TTF_OpenFont("/System/Library/Fonts/Menlo.ttc", pdc_font_size);
 #endif
     }
 

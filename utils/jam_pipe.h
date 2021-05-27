@@ -15,7 +15,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#if defined(unix) || defined(__unix) || defined(__unix__) || defined(UNIX)
 #include <sys/prctl.h>
+#endif
 #include <signal.h>
 #include <fcntl.h>
 #endif
@@ -310,7 +312,9 @@ inline int create_pipe(const char *path, char* const* argv, const char* current_
     close(inpipefd[1]);
     close(outpipefd[0]);
     close(outpipefd[1]);
+#if defined(unix) || defined(__unix) || defined(__unix__) || defined(UNIX)
     prctl(PR_SET_PDEATHSIG, SIGTERM);
+#endif
 
 
     if (execv(path, argv) == -1)

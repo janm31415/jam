@@ -8,7 +8,9 @@
 #include <windows.h>
 #else
 #include <unistd.h>
+#if defined(unix) || defined(__unix) || defined(__unix__) || defined(UNIX)
 #include <linux/limits.h>
+#endif
 #endif
 
 JAM_BEGIN

@@ -4,9 +4,11 @@
 #include <windows.h>
 #include <string>
 #include "jam_encoding.h"
-#else
-#include <unistd.h>
+#elif defined(unix) || defined(__unix) || defined(__unix__) || defined(UNIX)
 #include <linux/limits.h>
+#elif defined(__APPLE__)
+#include <limits.h>
+#include <unistd.h>
 #endif
 
 #include "jam_namespace.h"
